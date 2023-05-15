@@ -1,0 +1,41 @@
+.start
+{
+
+background-color: #f5f5fd;
+}
+
+
+.div.css-5rimmss.e16nr0p34
+    
+
+{
+  text-align: center;
+  font-family: 'Courier Prime', monospace;
+  font-size: 30px;
+  color: #ff3131;
+  font-weight: bold
+}
+.mission1
+{
+  text-align: center;
+  font-family: 'Courier Prime', monospace;
+  font-size: 30px;
+  color: #ff3131;
+  font-weight: bold
+}
+
+.div1
+{
+  position: absolute;
+  top: 50%;
+  left: 30%;
+  transform: translate(-50%, -50%);
+  
+}
+.home {
+
+  position:absolute ;
+  right: 0;
+  
+  }
+
