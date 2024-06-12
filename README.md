@@ -1,8 +1,18 @@
 # TricodersWebsite
 
 
-[Uploading video.mp4.zip…]()
 
+
+https://github.com/elif1906/TricodersWebsite/assets/84383557/cb652638-e15b-40d1-ba58-899939eea37a
+
+hint : ENGINEERING PROJECTS OF THE YEAR'23
+ENGINEERING PROJECTS OF THE YEAR'23
+Published by Beykoz university · Jun 2023Published by Beykoz university · Jun 2023
+
+Associated with Beykoz University
+Associated with Beykoz University
+Our project titled Tricoders (A real-life game controlled with human hand gesture using OpenCV) was deemed worthy of receiving the Engineering Project of the Year Award in the 2022-2023 Third Grade Category.
+https://www.linkedin.com/feed/update/urn:li:activity:7076247508749828096?utm_source=share&utm_medium=member_desktop
 
 
 
