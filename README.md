@@ -1,21 +1,85 @@
-# Catch Ball
-A straightforward computer-vision game developted by Mediapipe, openCV and Pygame
-# Description
-Multiple sclerosis (MS) is a condition that can affect the brain and spinal cord, causing a wide range of potential symptoms, including problems with vision, arm or leg movement, sensation, or balance. We have designed an exergame using computer vision for arm rehabilitation in individuals with multiple sclerosis.
-# How to run
-**Make Environment Ready By Following Steps Below:**<br>
-1- Install [python 3.10 and pip](https://www.python.org/) on your computer<br>
-2- Open your Termainl and by pip insall mediapipe, pygame, cv2 and cvzone<br>
-3- Clone the project on your computer or you can download the code from github link above, and place it on your system<br>
-4- Open your Terminal app inside Root directory of the project and run main.py: `python main.py`<br>
-5- Play the game
-# How to play
-In the game-play, try to catch the Balls with your hand (it doesn't matter which one), so open your hand, and when an insect comes inside your hand, try to close it instantly..
-# Soloution for possible errors
-1- You must have a webcam to play this game, or you can use your smartphone as a webcam<br>
-2- You need to change your webcam ID and set it to 0, or if it is not possible to change the camera ID, you can open main.py file and in line 10 change the ID, set it on your webcam ID<br>
-3- Check the direction of your webcam, and make sure that it's not upside down or reflects your picture as a mirror (that would cause the hand image in the game moves in the opposite direction of your actual hand)<br>
-4- In case of missing a specific library make sure which one is missing, and try to Install it (it could be any one of these "cvzone, mediapipe, opencv and pygame")<br>
-5- If you are encountered problems during playing the game, such as speed going down or the game doesn't work correctly, restarting the game may solve the problem:)<br>
+# TricodersWebsite
 
 
+[Uploading video.mp4.zip…]()
+
+
+
+
+## Overview
+The main purpose of our project was to re-present familiar games to users by developing them with innovative ideas. We aimed for a project that detects hand movements instead of the keyboard and offers the opportunity to experience games in a virtual world.
+We used Python language in this project. We used pygame, opencv, mediapipe, streamlit libraries.
+
+Now I would like to briefly talk about our games:
+
+📌 Our first game, "Catching Fish", is a game that aims to catch Nemo fish. This game has been carefully designed to provide a fun experience.
+
+📌 Our next game is "Fruit Ninja". We all know this game. It is a game generally played on the phone. However, in this project, we can use two hands, so we aimed to provide more interactivity to users.
+
+📌 The last game is the Tetris game. We combined this game, which has been played since the past, with today's technologies. In this game, we test the ability to move blocks using hand movements.
+We aimed to offer a unique gaming experience by combining the classic Tetris experience with hand guidance.
+
+## Features
+- Real-time hand detection using Mediapipe and OpenCV
+- Interactive gameplay designed for rehabilitation
+- Multiple game modes and settings
+- Background music and sound effects
+- User-friendly interface
+
+## Files and Directories
+- **Assets:** Contains images and other game assets.
+- **boostrap:** Contains Bootstrap files for styling.
+- **images:** Directory with images used in the game and website.
+- **music:** Directory with background music and sound effects.
+- **__pycache__:** Directory with Python bytecode files.
+- **.gitattributes:** Git configuration file.
+- **.streamlit:** Configuration files for Streamlit.
+- **background.py:** Script for managing game background.
+- **blowfish.py:** Script for blowfish character management.
+- **choose.py:** Script for selection screen.
+- **fish.py:** Script for fish character management.
+- **game.py:** Main game logic script.
+- **hand.py:** Script for hand detection logic.
+- **hand_tracking.py:** Script for tracking hand movements.
+- **image.py:** Script for image processing.
+- **main.py:** Entry point for the game.
+- **menu.py:** Script for main menu interface.
+- **menu1.py:** Additional menu script.
+- **settings.py:** Script for game settings.
+- **ui.py:** Script for user interface elements.
+- **styles.css:** CSS file for styling the website.
+- **index.html:** HTML file for the website.
+
+## Installation and Setup
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/elif1906/TricodersWebsite.git
+    ```
+2. Navigate to the project directory:
+    ```sh
+    cd TricodersWebsite
+    ```
+3. Install the required Python packages:
+    ```sh
+    pip install -r requirements.txt
+    ```
+4. Run the game:
+    ```sh
+    python main.py
+    ```
+
+## How to Play
+1. Ensure you have a webcam connected to your computer.
+2. Open your hand in front of the webcam to interact with the game.
+3. Catch virtual objects by closing your hand when they appear.
+4. Follow on-screen instructions and enjoy the game.
+
+## Troubleshooting
+- **Webcam Issues:** Ensure your webcam is correctly set up and recognized by your computer.
+- **Library Issues:** If a library is missing, install it using `pip install <library_name>`.
+- **Game Performance:** Restart the game if you encounter performance issues.
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+For more details, visit the [GitHub repository](https://github.com/elif1906/TricodersWebsite).
