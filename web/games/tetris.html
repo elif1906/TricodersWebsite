@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetris · Tricoders</title>
+  <link rel="icon" href="../assets/site/icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/game.css">
+</head>
+<body>
+  <a class="back-link" href="../#tetris">← Siteye dön</a>
+  <canvas class="game" id="game" width="1080" height="760"></canvas>
+
+  <script type="module">
+    import { HandTracker, fitCanvas, trackPointer, loadImage, loadMusic,
+      drawCountdown, bestScore, loadHintIcons } from "../js/hands.js";
+
+    const S_WIDTH = 1080, S_HEIGHT = 760;
+    const PLAY_WIDTH = 300, PLAY_HEIGHT = 600, BLOCK = 30;
+    const TOP_LEFT_X = (S_WIDTH - PLAY_WIDTH) / 2;
+    const TOP_LEFT_Y = S_HEIGHT - PLAY_HEIGHT - 10;
+    const EMPTY = "rgb(0,0,0)";
+
+    // the shapes with all their rotations
+    const S = [[".....", ".....", "..00.", ".00..", "....."], [".....", "..0..", "..00.", "...0.", "....."]];
+    const Z = [[".....", ".....", ".00..", "..00.", "....."], [".....", "..0..", ".00..", ".0...", "....."]];
+    const I = [["..0..", "..0..", "..0..", "..0..", "....."], [".....", "0000.", ".....", ".....", "....."]];
+    const O = [[".....", ".....", ".00..", ".00..", "....."]];
+    const J = [[".....", ".0...", ".000.", ".....", "....."], [".....", "..00.", "..0..", "..0..", "....."],
+               [".....", ".....", ".000.", "...0.", "....."], [".....", "..0..", "..0..", ".00..", "....."]];
+    const L = [[".....", "...0.", ".000.", ".....", "....."], [".....", "..0..", "..0..", "..00.", "....."],
+               [".....", ".....", ".000.", ".0...", "....."], [".....", ".00..", "..0..", "..0..", "....."]];
+    const T = [[".....", "..0..", ".000.", ".....", "....."], [".....", "..0..", "..00.", "..0..", "....."],
+               [".....", ".....", ".000.", "..0..", "....."], [".....", "..0..", ".00..", "..0..", "....."]];
+    const SHAPES = [S, Z, I, O, J, L, T];
+    const SHAPE_COLORS = ["rgb(0,230,115)", "rgb(255,51,51)", "rgb(0,204,255)", "rgb(255,255,128)",
+                          "rgb(0,102,255)", "rgb(255,140,26)", "rgb(204,51,255)"];
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    fitCanvas(canvas);
+    const pointer = trackPointer(canvas);
+
+    const [hintIcons, bg, menuBg] = await Promise.all([
+      loadHintIcons(),
+      loadImage("../assets/tetris/background.jpg"),
+      loadImage("../assets/tetris/menu.jpg"),
+    ]);
+    const music = loadMusic("../assets/sounds/tetris-music.mp3", 0.5);
+
+    const getShape = () => {
+      const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      return { x: 5, y: 0, shape, color: SHAPE_COLORS[SHAPES.indexOf(shape)], rotation: 0 };
+    };
+
+    function createGrid(locked) {
+      const grid = Array.from({ length: 20 }, () => Array(10).fill(EMPTY));
+      for (const [key, color] of locked) {
+        const [x, y] = key.split(",").map(Number);
+        if (y >= 0 && y < 20) grid[y][x] = color;
+      }
+      return grid;
+    }
+
+    function convertShapeFormat(piece) {
+      const format = piece.shape[piece.rotation % piece.shape.length];
+      const positions = [];
+      format.forEach((line, i) => [...line].forEach((c, j) => {
+        if (c === "0") positions.push([piece.x + j - 2, piece.y + i - 4]);
+      }));
+      return positions;
+    }
+
+    function validSpace(piece, grid) {
+      return convertShapeFormat(piece).every(([x, y]) => {
+        if (x < 0 || x > 9 || y > 19) return false;
+        if (y < 0) return true;
+        return grid[y][x] === EMPTY;
+      });
+    }
+
+    const checkLost = (locked) => [...locked.keys()].some((k) => Number(k.split(",")[1]) < 1);
+
+    function clearRows(grid, locked) {
+      let inc = 0, ind = -1;
+      for (let i = grid.length - 1; i >= 0; i--) {
+        if (!grid[i].includes(EMPTY)) {
+          inc += 1;
+          ind = i;
+          for (let j = 0; j < 10; j++) locked.delete(`${j},${i}`);
+        }
+      }
+      if (inc > 0) {
+        const keys = [...locked.keys()].map((k) => k.split(",").map(Number)).sort((a, b) => b[1] - a[1]);
+        for (const [x, y] of keys) {
+          if (y < ind) {
+            const color = locked.get(`${x},${y}`);
+            locked.delete(`${x},${y}`);
+            locked.set(`${x},${y + inc}`, color);
+          }
+        }
+      }
+      return inc;
+    }
+
+    const addScore = (rows) => ({ 0: 0, 1: 40, 2: 100, 3: 300, 4: 1200 })[rows];
+
+    function text(str, x, y, color, size, { align = "left", baseline = "top", weight = 700 } = {}) {
+      ctx.font = `${weight} ${size}px Fredoka, Arial, sans-serif`;
+      ctx.textAlign = align;
+      ctx.textBaseline = baseline;
+      ctx.fillStyle = color;
+      ctx.fillText(str, x, y);
+    }
+
+    function drawTextMiddle(str, size, color) {
+      text(str, TOP_LEFT_X + PLAY_WIDTH / 2, TOP_LEFT_Y + PLAY_HEIGHT / 2, color, size, { align: "center", baseline: "middle" });
+    }
+
+    function drawWindow(grid, score) {
+      ctx.drawImage(bg, 0, 0, S_WIDTH, S_HEIGHT);
+      text("TETRIS", TOP_LEFT_X + PLAY_WIDTH / 2, 15, "#000", 110, { align: "center" });
+
+      const sx = TOP_LEFT_X + PLAY_WIDTH + 50;
+      const sy = TOP_LEFT_Y + PLAY_HEIGHT / 2 - 100;
+      text(`Score: ${score}`, sx + 20, sy + 160, "#000", 34);
+
+      for (let i = 0; i < grid.length; i++) {
+        for (let j = 0; j < grid[i].length; j++) {
+          ctx.fillStyle = grid[i][j];
+          ctx.fillRect(TOP_LEFT_X + j * BLOCK, TOP_LEFT_Y + i * BLOCK, BLOCK, BLOCK);
+        }
+      }
+      ctx.strokeStyle = "rgb(215,215,215)";
+      ctx.lineWidth = 5;
+      ctx.strokeRect(TOP_LEFT_X - 2.5, TOP_LEFT_Y - 2.5, PLAY_WIDTH + 5, PLAY_HEIGHT + 5);
+
+      // grid lines
+      ctx.strokeStyle = "rgb(128,128,128)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= 20; i++) {
+        ctx.moveTo(TOP_LEFT_X, TOP_LEFT_Y + i * BLOCK + 0.5);
+        ctx.lineTo(TOP_LEFT_X + PLAY_WIDTH, TOP_LEFT_Y + i * BLOCK + 0.5);
+      }
+      for (let j = 0; j <= 10; j++) {
+        ctx.moveTo(TOP_LEFT_X + j * BLOCK + 0.5, TOP_LEFT_Y);
+        ctx.lineTo(TOP_LEFT_X + j * BLOCK + 0.5, TOP_LEFT_Y + PLAY_HEIGHT);
+      }
+      ctx.stroke();
+    }
+
+    function drawNextShape(piece) {
+      const sx = TOP_LEFT_X + PLAY_WIDTH + 50;
+      const sy = TOP_LEFT_Y + PLAY_HEIGHT / 2 - 100;
+      const format = piece.shape[piece.rotation % piece.shape.length];
+      ctx.fillStyle = piece.color;
+      format.forEach((line, i) => [...line].forEach((c, j) => {
+        if (c === "0") ctx.fillRect(sx + j * BLOCK, sy + i * BLOCK, BLOCK, BLOCK);
+      }));
+      text("Next Shape", sx + 10, sy - 40, "#000", 34);
+    }
+
+    // HINT panel with the same hand icons as the site; the gesture the camera sees right now is
+    // highlighted, with a bar that fills up until the move happens
+    const HINTS = [
+      { key: "left", icon: "thumb", label: "GO LEFT", arrow: "left", need: 4 },
+      { key: "right", icon: "pinky", label: "GO RIGHT", arrow: "right", need: 4 },
+      { key: "rotate", icon: "open", label: "ROTATES", arrow: "rotate", need: 4 },
+      { key: "down", icon: null, label: "GO DOWN", arrow: "down", need: 5 },
+    ];
+    function drawArrow(kind, cx, cy) {
+      ctx.save();
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      if (kind === "left") { ctx.moveTo(cx + 22, cy); ctx.lineTo(cx - 22, cy); ctx.moveTo(cx - 14, cy - 7); ctx.lineTo(cx - 22, cy); ctx.lineTo(cx - 14, cy + 7); }
+      if (kind === "right") { ctx.moveTo(cx - 22, cy); ctx.lineTo(cx + 22, cy); ctx.moveTo(cx + 14, cy - 7); ctx.lineTo(cx + 22, cy); ctx.lineTo(cx + 14, cy + 7); }
+      if (kind === "rotate") { ctx.arc(cx, cy, 9, -0.6, Math.PI * 1.45); ctx.moveTo(cx - 9, cy - 13); ctx.lineTo(cx - 4, cy - 8); ctx.lineTo(cx - 11, cy - 4); }
+      if (kind === "down") { ctx.moveTo(cx, cy - 12); ctx.lineTo(cx, cy + 12); ctx.moveTo(cx - 7, cy + 5); ctx.lineTo(cx, cy + 12); ctx.lineTo(cx + 7, cy + 5); }
+      ctx.stroke();
+      ctx.restore();
+    }
+    function drawHelp(x = 22, y = 160, live = true) {
+      ctx.fillStyle = "rgba(255,255,255,0.8)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, 340, 206, 16);
+      ctx.fill();
+      ctx.fillStyle = "#fde9d6";
+      ctx.fillRect(x + 14, y + 12, 56, 26);
+      text("HINT:", x + 18, y + 15, "#000", 20);
+      HINTS.forEach((h, i) => {
+        const cx = x + 50 + i * 80;
+        const active = live && gesture === h.key;
+        if (active) {
+          ctx.fillStyle = "rgba(248,134,21,0.18)";
+          ctx.beginPath();
+          ctx.roundRect(cx - 38, y + 44, 76, 150, 12);
+          ctx.fill();
+          const progress = Math.min(waits[h.key] / h.need, 1);
+          ctx.fillStyle = "#f88615";
+          ctx.fillRect(cx - 30, y + 186, 60 * progress, 4);
+        }
+        if (h.icon) ctx.drawImage(hintIcons[h.icon], cx - 24, y + 52, 48, 56);
+        else text("NO HAND", cx, y + 80, "#000", 15, { align: "center", baseline: "middle" });
+        text(h.label, cx, y + 124, "#f88615", 14, { align: "center", baseline: "middle" });
+        drawArrow(h.arrow, cx, y + 156);
+      });
+    }
+
+    // the QUIT label sits on the pink pill painted in the background
+    const QUIT = { x: 122, y: 384, w: 154, h: 32 };
+    function drawQuit() {
+      text("QUIT", QUIT.x + QUIT.w / 2, QUIT.y + QUIT.h / 2 + 1, "#fff", 26, { align: "center", baseline: "middle" });
+    }
+    const inRect = (r, px, py) => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+
+    // THE GAME STATE ------------------------------------------------------
+    let state = "menu";
+    let locked, currentPiece, nextPiece, changePiece, fallTime, levelTime, fallSpeedReal, fallSpeed, score;
+    const FALL_SPEED_DOWN = 0.1;
+    const waits = { left: 0, right: 0, rotate: 0, down: 0 };
+    let lostAt = 0, countdownEnd = 0;
+    let gesture = null; // what the camera sees right now: left / right / rotate / down
+    let best = bestScore("tetris"), newBest = false;
+
+    function startGame() {
+      locked = new Map();
+      currentPiece = getShape();
+      nextPiece = getShape();
+      changePiece = false;
+      fallTime = 0;
+      levelTime = 0;
+      fallSpeedReal = 0.45;
+      fallSpeed = fallSpeedReal;
+      score = 0;
+      Object.keys(waits).forEach((k) => (waits[k] = 0));
+      music.play();
+      countdownEnd = performance.now() + 3000;
+      state = "countdown";
+    }
+
+    const resetWaits = () => { waits.left = waits.right = waits.rotate = waits.down = 0; };
+
+    // every camera frame counts towards a gesture, like the original main loop
+    function onHands(detected) {
+      const lms = detected[0];
+      if (!lms) {
+        gesture = "down";
+        if (state === "game") waits.down += 1;
+        return;
+      }
+      const x = lms.map((lm) => lm.x * 640);
+      const y = lms.map((lm) => (1 - lm.y) * 480);
+      const thumbLeft = x[0] > x[3] && x[3] > x[4];
+      const pinkyUp = y[20] > y[17];
+      gesture = thumbLeft && !pinkyUp ? "left" : !thumbLeft && pinkyUp ? "right" : thumbLeft && pinkyUp ? "rotate" : null;
+      if (state !== "game") return;
+      if (gesture) waits[gesture] += 1;
+    }
+    const tracker = new HandTracker({ numHands: 1, onResults: onHands });
+    tracker.start().catch((err) => tracker.fail(err));
+
+    function move(dx, dy, drot) {
+      currentPiece.x += dx;
+      currentPiece.rotation += drot;
+      const grid = createGrid(locked);
+      if (!validSpace(currentPiece, grid)) {
+        currentPiece.x -= dx;
+        currentPiece.rotation -= drot;
+      }
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (state === "menu" && (e.key === "Enter" || e.key === " ")) return startGame();
+      if (state !== "game") return;
+      if (e.key === "ArrowLeft") move(-1, 0, 0);
+      else if (e.key === "ArrowRight") move(1, 0, 0);
+      else if (e.key === "ArrowUp") move(0, 0, 1);
+      else if (e.key === "ArrowDown") fallSpeed = FALL_SPEED_DOWN;
+      else return;
+      e.preventDefault();
+    });
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(now - last, 100);
+      last = now;
+
+      if (state === "menu") {
+        ctx.drawImage(menuBg, 0, 0, S_WIDTH, S_HEIGHT);
+        drawTextMiddle("Start", 44, "#fff");
+        text("Başlamak için tıkla", S_WIDTH / 2, 510, "#555", 22, { align: "center", weight: 500 });
+        drawHelp(S_WIDTH / 2 - 170, 540, tracker.ready);
+        if (best > 0) text(`Best: ${best}`, S_WIDTH - 30, 30, "#555", 26, { align: "right" });
+        if (pointer.clicked) startGame();
+      } else if (state === "countdown") {
+        drawWindow(createGrid(locked), 0);
+        drawNextShape(nextPiece);
+        drawHelp(22, 160, tracker.ready);
+        drawCountdown(ctx, S_WIDTH, S_HEIGHT, countdownEnd - now);
+        if (now >= countdownEnd) {
+          resetWaits();
+          state = "game";
+        }
+      } else if (state === "game") {
+        let grid = createGrid(locked);
+        fallTime += dt;
+        levelTime += dt;
+
+        // every 10 sec, shapes fall 0.03 sec faster (peak at 0.25)
+        if (levelTime / 1000 > 10) {
+          levelTime = 0;
+          if (fallSpeedReal > 0.25) fallSpeedReal -= 0.03;
+        }
+
+        if (fallTime / 1000 > fallSpeed) {
+          fallTime = 0;
+          currentPiece.y += 1;
+          if (!validSpace(currentPiece, grid) && currentPiece.y > 0) {
+            currentPiece.y -= 1;
+            changePiece = true;
+          }
+        }
+
+        // a gesture held for 4 camera frames moves the piece; no hand for 5 frames drops it
+        if (waits.left >= 4) { move(-1, 0, 0); resetWaits(); }
+        if (waits.right >= 4) { move(1, 0, 0); resetWaits(); }
+        if (waits.rotate >= 4) { move(0, 0, 1); resetWaits(); }
+        if (waits.down >= 5) { fallSpeed = FALL_SPEED_DOWN; resetWaits(); }
+
+        const shapePos = convertShapeFormat(currentPiece);
+        for (const [x, y] of shapePos) if (y > -1) grid[y][x] = currentPiece.color;
+
+        if (changePiece) {
+          for (const [x, y] of shapePos) locked.set(`${x},${y}`, currentPiece.color);
+          currentPiece = nextPiece;
+          nextPiece = getShape();
+          changePiece = false;
+          score += addScore(clearRows(grid, locked));
+          grid = createGrid(locked);
+          for (const [x, y] of convertShapeFormat(currentPiece)) if (y > -1 && grid[y][x] === EMPTY) grid[y][x] = currentPiece.color;
+          fallSpeed = fallSpeedReal;
+          waits.down = 0;
+        }
+
+        drawWindow(grid, score);
+        drawNextShape(nextPiece);
+        drawHelp(22, 160, tracker.ready);
+        drawQuit();
+
+        if (pointer.clicked && inRect(QUIT, pointer.x, pointer.y)) {
+          music.stop();
+          state = "menu";
+        } else if (checkLost(locked)) {
+          state = "lost";
+          lostAt = now;
+          newBest = score > best;
+          best = bestScore("tetris", score);
+        }
+      } else if (state === "lost") {
+        drawWindow(createGrid(locked), score);
+        drawNextShape(nextPiece);
+        drawHelp(22, 160, false);
+        drawTextMiddle("YOU LOST!", 70, "rgb(255,225,225)");
+        text(newBest ? "NEW BEST!" : `Best: ${best}`, TOP_LEFT_X + PLAY_WIDTH / 2, TOP_LEFT_Y + PLAY_HEIGHT / 2 + 60,
+          newBest ? "#ffd84d" : "#fff", 32, { align: "center", baseline: "middle" });
+        if (now - lostAt > 2500) {
+          music.stop();
+          state = "menu";
+        }
+      }
+
+      pointer.clicked = false;
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fruit Ninja · Tricoders</title>
+  <link rel="icon" href="../assets/site/icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/game.css">
+</head>
+<body>
+  <a class="back-link" href="../#fruit-ninja">← Siteye dön</a>
+  <canvas class="game" id="game" width="1366" height="768"></canvas>
+
+  <script type="module">
+    import { HandTracker, fitCanvas, trackPointer, loadImage, loadSound, loadMusic,
+      drawCountdown, bestScore, loadHintIcons, drawCatchHint } from "../js/hands.js";
+
+    const W = 1366, H = 768;
+    const HAND_SIZE = 128;
+    const NUMBER_OF_FRUITS = 10;
+    const TIME_LIMIT = 60;
+    const SPEED = { x: 10, y: 8 }; // px per frame of the original camera-bound loop (~30 FPS)
+    const FINGER_TIPS = [8, 12, 16, 20];
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    fitCanvas(canvas);
+    const pointer = trackPointer(canvas);
+
+    const [hints, bg, menuBg, loadingBg, openHand, closedHand, ...fruitImgs] = await Promise.all([
+      loadHintIcons(),
+      loadImage("../assets/fruit/background.jpg"),
+      loadImage("../assets/fruit/menu.jpg"),
+      loadImage("../assets/fruit/loading.jpg"),
+      loadImage("../assets/fruit/openHand.png"),
+      loadImage("../assets/fruit/closedHand.png"),
+      ...["melon", "apple", "banana", "pineapple"].map((f) => loadImage(`../assets/fruit/${f}.png`)),
+    ]);
+    const catchSound = loadSound("../assets/sounds/catch.wav");
+    const music = loadMusic("../assets/sounds/fruit-music.mp3", 0.5);
+
+    // two hands, like cvzone HandDetector(maxHands=2)
+    const tracker = new HandTracker({ numHands: 2 });
+    tracker.start().catch((err) => tracker.fail(err));
+    const hands = [0, 1].map(() => ({ x: 0, y: 0, closed: false, wasClosed: false, visible: false, armed: false }));
+
+    // the camera only covers the middle of the view, so stretch it a bit to reach the edges
+    const stretch = (v) => Math.min(Math.max((v - 0.5) * 1.35 + 0.5, 0), 1);
+
+    function updateHands() {
+      const detected = tracker.hands;
+      hands.forEach((h, i) => {
+        h.wasClosed = h.closed;
+        const lms = detected[i];
+        if (lms) {
+          h.visible = true;
+          h.x = stretch(lms[9].x) * W;
+          h.y = stretch(lms[9].y) * H;
+          // a finger is folded when its tip is below the joint two points before it
+          h.closed = FINGER_TIPS.every((tip) => lms[tip].y > lms[tip - 2].y);
+          h.source = "camera";
+        } else if (i === 0 && pointer.active && detected.length === 0) {
+          h.visible = true;
+          h.x = pointer.x;
+          h.y = pointer.y;
+          h.closed = pointer.down;
+          h.source = "pointer";
+        } else {
+          h.visible = false;
+          h.closed = false;
+          h.armed = false;
+        }
+      });
+    }
+
+    const rand = (a, b) => a + Math.random() * (b - a);
+    function newFruit(i) {
+      const img = fruitImgs[i % fruitImgs.length];
+      return {
+        img,
+        x: rand(0, W - img.width),
+        y: rand(0, H - img.height),
+        vx: SPEED.x * (Math.random() < 0.5 ? -1 : 1),
+        vy: SPEED.y * (Math.random() < 0.5 ? -1 : 1),
+      };
+    }
+
+    function overlaps(h, f) {
+      const hx = h.x - HAND_SIZE / 2, hy = h.y - HAND_SIZE / 2;
+      return hx < f.x + f.img.width && hx + HAND_SIZE > f.x && hy < f.y + f.img.height && hy + HAND_SIZE > f.y;
+    }
+
+    function text(str, x, y, color, size, align = "left") {
+      ctx.font = `700 ${size}px Fredoka, Arial, sans-serif`;
+      ctx.textAlign = align;
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = color;
+      ctx.fillText(str, x, y);
+    }
+
+    function pillButton(label, cx, cy, w = 280, h = 74, size = 44) {
+      const x = cx - w / 2, y = cy - h / 2;
+      const over = (px, py) => px >= x && px <= x + w && py >= y && py <= y + h;
+      const hover = hands.some((hd) => hd.visible && over(hd.x, hd.y)) || over(pointer.x, pointer.y);
+      ctx.fillStyle = hover ? "#8a5a3a" : "#6e452b";
+      ctx.strokeStyle = "#2b1a10";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, h / 2);
+      ctx.fill();
+      ctx.stroke();
+      text(label, cx, cy + 2, hover ? "#FFD165" : "#f5f5fd", size, "center");
+      const clicked = (pointer.clicked && over(pointer.x, pointer.y)) ||
+        hands.some((hd) => hd.source === "camera" && hd.visible && hd.closed && !hd.wasClosed && over(hd.x, hd.y));
+      if (clicked) catchSound.play();
+      return clicked;
+    }
+
+    function drawHands() {
+      for (const h of hands) {
+        if (!h.visible) continue;
+        if (state === "game" && h.armed && !h.closed) {
+          ctx.strokeStyle = "rgba(255,209,101,0.9)";
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.arc(h.x, h.y, HAND_SIZE / 2 + 6, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.drawImage(h.closed ? closedHand : openHand, h.x - HAND_SIZE / 2, h.y - HAND_SIZE / 2, HAND_SIZE, HAND_SIZE);
+      }
+    }
+
+    let state = "loading";
+    const loadingUntil = performance.now() + 1500;
+    let fruits = [], score = 0, startTime = 0, countdownEnd = 0;
+    let best = bestScore("fruit-ninja"), newBest = false, finished = false;
+    let popups = [];
+
+    function startGame() {
+      fruits = Array.from({ length: NUMBER_OF_FRUITS }, (_, i) => newFruit(i));
+      score = 0;
+      hands.forEach((h) => (h.armed = false));
+      popups = [];
+      finished = false;
+      newBest = false;
+      music.play();
+      countdownEnd = performance.now() + 3000;
+      state = "countdown";
+    }
+
+    let last = performance.now();
+    function frame(now) {
+      const frames = Math.min((now - last) / (1000 / 30), 4);
+      last = now;
+      updateHands();
+
+      if (state === "loading") {
+        ctx.drawImage(loadingBg, 0, 0, W, H);
+        if (now > loadingUntil) state = "menu";
+      } else if (state === "menu") {
+        ctx.drawImage(menuBg, 0, 0, W, H);
+        text("Meyvenin üstünde elini aç, sonra kapatıp yakala!", 698, 470, "#3b2414", 28, "center");
+        // sits on the empty pill drawn in the menu artwork
+        if (pillButton("START", 698, 385, 204, 46, 36)) startGame();
+        drawCatchHint(ctx, hints, 698, 580, "PICK UP");
+        if (best > 0) text(`Best : ${best}`, W - 30, H - 40, "#3b2414", 32, "right");
+        drawHands();
+      } else if (state === "countdown") {
+        ctx.drawImage(bg, 0, 0, W, H);
+        for (const f of fruits) ctx.drawImage(f.img, f.x, f.y);
+        drawHands();
+        drawCountdown(ctx, W, H, countdownEnd - now);
+        if (now >= countdownEnd) {
+          startTime = now;
+          state = "game";
+        }
+      } else {
+        ctx.drawImage(bg, 0, 0, W, H);
+        const remaining = Math.max(TIME_LIMIT - Math.floor((now - startTime) / 1000), 0);
+
+        if (remaining > 0) {
+          for (const f of fruits) {
+            f.x += f.vx * frames;
+            f.y += f.vy * frames;
+            if (f.x <= 0) { f.x = 0; f.vx = Math.abs(f.vx); }
+            if (f.x + f.img.width >= W) { f.x = W - f.img.width; f.vx = -Math.abs(f.vx); }
+            if (f.y <= 0) { f.y = 0; f.vy = Math.abs(f.vy); }
+            if (f.y + f.img.height >= H) { f.y = H - f.img.height; f.vy = -Math.abs(f.vy); }
+          }
+
+          // catching: touch a fruit with an open hand, then close the hand on it
+          for (const h of hands) {
+            if (!h.visible) continue;
+            if (h.closed) {
+              if (h.armed) {
+                const i = fruits.findIndex((f) => overlaps(h, f));
+                if (i >= 0) {
+                  score += 1;
+                  catchSound.play();
+                  popups.push({ x: h.x, y: h.y - 70, born: now });
+                  fruits[i] = newFruit(i);
+                }
+              }
+              h.armed = false;
+            } else if (fruits.some((f) => overlaps(h, f))) {
+              h.armed = true;
+            }
+          }
+        }
+
+        for (const f of fruits) ctx.drawImage(f.img, f.x, f.y);
+        drawHands();
+        text(`Score : ${score}`, 50, 46, "#fff", 32);
+        if (remaining > 0) {
+          text(`Time: ${remaining}`, W - 30, 30, "#fff", 32, "right");
+        } else {
+          if (!finished) {
+            finished = true;
+            newBest = score > best;
+            best = bestScore("fruit-ninja", score);
+          }
+          text("Game Over!", W / 2, H / 2 - 80, "#ff0000", 100, "center");
+          text(`Score : ${score}`, W / 2, H / 2 + 5, "#fff", 48, "center");
+          text(newBest ? "NEW BEST!" : `Best : ${best}`, W / 2, H / 2 + 55, newBest ? "#FFD165" : "#fff", 34, "center");
+          if (pillButton("PLAY AGAIN", W / 2 - 170, H / 2 + 120)) startGame();
+          if (pillButton("MENU", W / 2 + 170, H / 2 + 120)) {
+            music.stop();
+            state = "menu";
+          }
+        }
+      }
+
+      popups = popups.filter((p) => now - p.born < 700);
+      for (const p of popups) {
+        const t = (now - p.born) / 700;
+        ctx.globalAlpha = 1 - t;
+        text("+1", p.x, p.y - t * 50, "#FFD165", 46, "center");
+        ctx.globalAlpha = 1;
+      }
+
+      pointer.clicked = false;
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

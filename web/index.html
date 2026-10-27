@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tricoders · Real-Life Games</title>
+  <meta name="description" content="Tricoders: Catching Fish, Fruit Ninja and Tetris played with your hands through your webcam.">
+  <link rel="icon" href="assets/site/icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f5fd;
+      --primary: #f88615;
+      --text: #31333f;
+      --muted: #6b6d7a;
+      --card: #ffffff;
+      --border: #e4e4f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Fredoka", system-ui, sans-serif;
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px 48px; }
+
+    header { padding: 28px 0 8px; text-align: center; }
+    header img { width: min(420px, 80%); height: auto; }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      background: var(--card);
+      border-radius: 10px;
+      padding: 6px;
+      margin: 12px auto 28px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+    nav a {
+      flex: 1 1 140px;
+      text-align: center;
+      padding: 12px 10px;
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 17px;
+    }
+    nav a:hover { color: var(--primary); }
+    nav a.active { background: var(--primary); color: #fff; }
+
+    section { display: none; }
+    section.active { display: block; }
+    .hero { width: 100%; height: auto; display: block; border-radius: 12px; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      align-items: center;
+      margin: 0 0 22px;
+    }
+    .play {
+      display: inline-block;
+      padding: 14px 34px;
+      border-radius: 999px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+      transition: transform 0.15s ease;
+    }
+    .play:hover { transform: translateY(-2px); }
+    .play.blue { background: #2e78d6; }
+    .play.red { background: #e5383b; }
+    .play.green { background: #1fa45a; }
+    .download { color: var(--muted); font-weight: 500; }
+    .note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+      margin: -8px 0 22px;
+    }
+
+    .feedback {
+      max-width: 720px;
+      margin: 32px auto 0;
+      background: var(--card);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+    .feedback h2 { margin: 0 0 16px; font-weight: 600; }
+    .feedback label { display: block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; }
+    .feedback input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font: inherit;
+      background: var(--bg);
+    }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+    .feedback button {
+      margin-top: 18px;
+      padding: 10px 22px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .success { color: #1f8a4c; margin-left: 12px; }
+    .entries { margin-top: 20px; font-size: 14px; color: var(--muted); }
+    .entries div { padding: 8px 0; border-top: 1px solid var(--border); }
+
+    .award {
+      text-align: center;
+      font-family: "Courier Prime", monospace;
+      color: #ff3131;
+      font-size: 18px;
+      margin: 28px 0 0;
+    }
+
+    /* HINT block drawn in the empty space under each game's description, like the original site */
+    .game-card { position: relative; container-type: inline-size; }
+    .hint {
+      position: absolute;
+      left: 37.6%;
+      top: 57%;
+      width: 58%;
+      font-size: 1.3cqw;
+    }
+    .hint-label {
+      display: inline-block;
+      background: #fde9d6;
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 1.15em;
+      letter-spacing: 0.5px;
+    }
+    .hint-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 3.2em;
+      margin-top: 0.6em;
+    }
+    .hint-row.center { align-items: center; }
+    .hint-item { display: flex; flex-direction: column; align-items: center; gap: 0.3em; }
+    .hint-item img { width: 4.6em; height: auto; }
+    .hint-item b {
+      color: var(--primary);
+      font-size: 0.95em;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .hint-item svg { width: 4.6em; height: auto; }
+    .hint-item svg.rot { width: 1.9em; }
+    .hint-item svg.down { width: 1em; }
+    .hint-item .no-hand { font-weight: 700; font-size: 1.05em; height: 5.5em; display: flex; align-items: center; }
+    @media (max-width: 700px) {
+      .hint { position: static; width: auto; font-size: 13px; margin: 12px 0 0; }
+      .hint-row { gap: 18px; flex-wrap: wrap; }
+      .hint-item img { width: 46px; }
+      .hint-item svg { width: 54px; }
+      .hint-item svg.rot { width: 22px; }
+      .hint-item svg.down { width: 12px; }
+      .hint-item .no-hand { height: 56px; }
+    }
+    @media (max-width: 600px) {
+      .grid2 { grid-template-columns: 1fr; }
+      nav a { flex-basis: 45%; font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header><img src="assets/site/logo.png" alt="Tricoders"></header>
+
+    <nav>
+      <a href="#home" data-tab="home">Home</a>
+      <a href="#catching-fish" data-tab="catching-fish">Catching Fish</a>
+      <a href="#fruit-ninja" data-tab="fruit-ninja">Fruit Ninja</a>
+      <a href="#tetris" data-tab="tetris">Tetris</a>
+      <a href="#about" data-tab="about">About</a>
+    </nav>
+
+    <section id="home">
+      <img class="hero" src="assets/site/home.jpg" alt="Real-Life Game: There's a little game in all of us. Find yourself.">
+      <p class="award">Engineering Project of the Year '23 · Beykoz University</p>
+    </section>
+
+    <section id="catching-fish">
+      <div class="actions">
+        <a class="play blue" href="games/catching-fish.html">PLAY CATCHING FISH</a>
+        <a class="download" href="https://github.com/elif1906/Catching-fish" target="_blank" rel="noopener">Download</a>
+      </div>
+      <p class="note">Kameran açılır, elini aç-kapa yaparak köpek balığını yönet. Kamera yoksa fare ile de oynanır.</p>
+      <div class="game-card">
+        <img class="hero" src="assets/site/catching-fish.jpg" alt="Catching Fish">
+        <div class="hint">
+          <span class="hint-label">HINT:</span>
+          <div class="hint-row center">
+            <div class="hint-item"><img src="assets/hints/open.svg" alt="Open hand"></div>
+            <div class="hint-item"><svg viewBox="0 0 120 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 52 C20 20 48 12 58 30 C66 46 46 50 50 34 C56 14 86 8 108 16"/><path d="M96 6 L110 16 L98 28"/></svg><b>CATCHING</b></div>
+            <div class="hint-item"><img src="assets/hints/fist.svg" alt="Closed hand"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="fruit-ninja">
+      <div class="actions">
+        <a class="play red" href="games/fruit-ninja.html">PLAY FRUIT NINJA</a>
+        <a class="download" href="https://github.com/elif1906/FruitAl" target="_blank" rel="noopener">Download</a>
+      </div>
+      <p class="note">İki elinle de oynayabilirsin: meyvenin üstünde elini aç, sonra kapatıp yakala.</p>
+      <div class="game-card">
+        <img class="hero" src="assets/site/fruit-ninja.jpg" alt="Fruit Ninja">
+        <div class="hint">
+          <span class="hint-label">HINT:</span>
+          <div class="hint-row center">
+            <div class="hint-item"><img src="assets/hints/open.svg" alt="Open hand"></div>
+            <div class="hint-item"><svg viewBox="0 0 120 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 52 C20 20 48 12 58 30 C66 46 46 50 50 34 C56 14 86 8 108 16"/><path d="M96 6 L110 16 L98 28"/></svg><b>PICK UP</b></div>
+            <div class="hint-item"><img src="assets/hints/fist.svg" alt="Closed hand"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tetris">
+      <div class="actions">
+        <a class="play green" href="games/tetris.html">PLAY TETRIS</a>
+        <a class="download" href="https://github.com/elif1906/TetrisAl" target="_blank" rel="noopener">Download</a>
+      </div>
+      <p class="note">Blokları el hareketlerinle yönet. Klavyenin ok tuşları da çalışır.</p>
+      <div class="game-card">
+        <img class="hero" src="assets/site/tetris.jpg" alt="Tetris">
+        <div class="hint">
+          <span class="hint-label">HINT:</span>
+          <div class="hint-row">
+            <div class="hint-item"><img src="assets/hints/thumb.svg" alt="Fist with thumb out"><b>GO LEFT</b><svg viewBox="0 0 120 30" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M112 15 H10 M24 4 L10 15 L24 26"/></svg></div>
+            <div class="hint-item"><img src="assets/hints/pinky.svg" alt="Fist with pinky up"><b>GO RIGHT</b><svg viewBox="0 0 120 30" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 15 H110 M96 4 L110 15 L96 26"/></svg></div>
+            <div class="hint-item"><img src="assets/hints/open.svg" alt="Open hand"><b>ROTATES</b><svg class="rot" viewBox="0 0 60 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M44 16 A20 20 0 1 1 16 18"/><path d="M8 10 L16 18 L6 24"/></svg></div>
+            <div class="hint-item"><span class="no-hand">NO HAND</span><b>GO DOWN</b><svg class="down" viewBox="0 0 30 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 V54 M4 42 L15 54 L26 42"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <img class="hero" src="assets/site/about.jpg" alt="Who are we? Şevval Kalkavan, Kübra Bahadır, Elif Nur Aslıhan Celepoğlu">
+
+      <form class="feedback" id="feedback">
+        <h2>We are waiting your comments 😎</h2>
+        <div class="grid2">
+          <div><label for="f-name">Name</label><input id="f-name" required></div>
+          <div><label for="f-last">Last name</label><input id="f-last"></div>
+          <div><label for="f-age">Age</label><input id="f-age" type="number" min="0" max="120"></div>
+          <div><label for="f-game">Favorite game</label><input id="f-game"></div>
+          <div><label for="f-fish">Catching Fish score [0–10]</label><input id="f-fish" type="number" min="0" max="10"></div>
+          <div><label for="f-fruit">Fruit Ninja score [0–10]</label><input id="f-fruit" type="number" min="0" max="10"></div>
+          <div><label for="f-tetris">Tetris score [0–10]</label><input id="f-tetris" type="number" min="0" max="10"></div>
+        </div>
+        <button type="submit">Sign the form</button><span class="success" id="f-ok" hidden>Form signed successfully.</span>
+        <div class="entries" id="entries"></div>
+      </form>
+    </section>
+  </div>
+
+  <script>
+    const tabs = ["home", "catching-fish", "fruit-ninja", "tetris", "about"];
+    function show() {
+      const current = tabs.includes(location.hash.slice(1)) ? location.hash.slice(1) : "home";
+      for (const id of tabs) document.getElementById(id).classList.toggle("active", id === current);
+      document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("active", a.dataset.tab === current));
+    }
+    window.addEventListener("hashchange", show);
+    show();
+
+    // comments are kept in this browser only (the site has no server)
+    const KEY = "tricoders-comments";
+    const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+    function renderEntries() {
+      const box = document.getElementById("entries");
+      box.replaceChildren(...read().map((e) => {
+        const div = document.createElement("div");
+        div.textContent = `${e.name} ${e.last} · ${e.game || "-"} · Fish ${e.fish || "-"} / Fruit ${e.fruit || "-"} / Tetris ${e.tetris || "-"} · ${e.date}`;
+        return div;
+      }));
+    }
+    document.getElementById("feedback").addEventListener("submit", (ev) => {
+      ev.preventDefault();
+      const v = (id) => document.getElementById(id).value.trim();
+      const entry = { name: v("f-name"), last: v("f-last"), age: v("f-age"), game: v("f-game"),
+        fish: v("f-fish"), fruit: v("f-fruit"), tetris: v("f-tetris"), date: new Date().toLocaleString() };
+      try { localStorage.setItem(KEY, JSON.stringify([...read(), entry])); } catch {}
+      ev.target.reset();
+      document.getElementById("f-ok").hidden = false;
+      renderEntries();
+    });
+    renderEntries();
+  </script>
+</body>
+</html>

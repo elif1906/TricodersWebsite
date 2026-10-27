@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catching Fish · Tricoders</title>
+  <link rel="icon" href="../assets/site/icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/game.css">
+</head>
+<body>
+  <a class="back-link" href="../#catching-fish">← Siteye dön</a>
+  <canvas class="game" id="game" width="1200" height="700"></canvas>
+
+  <script type="module">
+    import { HandTracker, fitCanvas, trackPointer, loadImage, loadSound, loadMusic,
+      drawCountdown, bestScore, loadHintIcons, drawCatchHint } from "../js/hands.js";
+
+    // settings.py
+    const W = 1200, H = 700;
+    const BUTTON = { w: 200, h: 90 };
+    const HAND_SIZE = 200;
+    const HAND_HITBOX = { w: 60, h: 80 };
+    const FISH_SIZE = { w: 38, h: 38 }, FISH_RANDOMIZE = [1, 2];
+    const BLOWFISH_SIZE = { w: 40, h: 30 }, BLOWFISH_RANDOMIZE = [1.2, 1.5];
+    const GAME_DURATION = 60;
+    const FISH_SPAWN_TIME = 1;
+    const FISH_SPEED = { min: 1, max: 5 }; // px per frame at the original 90 FPS
+    const BLOWFISH_PENALITY = 1;
+    const COLORS = { title: "rgb(46,54,163)", text: "rgb(46,54,163)", warn: "rgb(160,40,0)",
+      button: "rgb(56,67,209)", buttonHover: "rgb(87,99,255)", buttonShadow: "rgb(46,54,163)" };
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    fitCanvas(canvas);
+    const pointer = trackPointer(canvas);
+
+    const [hints, bg, menuBg, loadingBg, sharkImg, fishImg, blowfishImg] = await Promise.all([
+      loadHintIcons(),
+      loadImage("../assets/fish/background.jpg"),
+      loadImage("../assets/fish/menu.jpg"),
+      loadImage("../assets/fish/loading.jpg"),
+      loadImage("../assets/fish/shark.png"),
+      loadImage("../assets/fish/fish.png"),
+      loadImage("../assets/fish/blowfish.png"),
+    ]);
+    const sounds = { slap: loadSound("../assets/sounds/slap.wav"), screaming: loadSound("../assets/sounds/screaming.wav") };
+    const music = loadMusic("../assets/sounds/fish-music.mp3", 0.16);
+
+    // hand_tracking.py: landmark 9 is the centre, hand is closed when the middle fingertip (12) is below it
+    const hand = { x: W / 2, y: H / 2, closed: false, wasClosed: false, source: "pointer" };
+    const tracker = new HandTracker({ numHands: 1 });
+    tracker.start().catch((err) => tracker.fail(err));
+
+    function updateHand() {
+      hand.wasClosed = hand.closed;
+      const lms = tracker.hands[0];
+      if (lms) {
+        hand.x = lms[9].x * W;
+        hand.y = lms[9].y * H;
+        hand.closed = lms[12].y > lms[9].y;
+        hand.source = "camera";
+      } else if (!tracker.ready || pointer.active) {
+        hand.x = pointer.x;
+        hand.y = pointer.y;
+        hand.closed = pointer.down;
+        hand.source = "pointer";
+      } else {
+        hand.closed = false;
+      }
+    }
+
+    class Fish {
+      constructor(isBlowfish) {
+        this.blowfish = isBlowfish;
+        const [lo, hi] = isBlowfish ? BLOWFISH_RANDOMIZE : FISH_RANDOMIZE;
+        const base = isBlowfish ? BLOWFISH_SIZE : FISH_SIZE;
+        const k = lo + Math.random() * (hi - lo);
+        // drawn a bit larger than the original pygame sprites so they read well in the browser
+        this.size = { w: Math.floor(base.w * k * 1.5), h: Math.floor(base.h * k * 1.5) };
+        this.hit = { w: this.size.w / 1.4, h: this.size.h / 1.4 };
+        const vel = FISH_SPEED.min + Math.random() * (FISH_SPEED.max - FISH_SPEED.min);
+        this.dir = ["left", "right", "up", "down"][Math.floor(Math.random() * 4)];
+        const rand = (a, b) => a + Math.random() * (b - a);
+        if (this.dir === "right") { this.x = -this.size.w; this.y = rand(this.size.h, H - this.size.h); this.vel = [vel, 0]; }
+        if (this.dir === "left") { this.x = W + this.size.w; this.y = rand(this.size.h, H - this.size.h); this.vel = [-vel, 0]; }
+        if (this.dir === "up") { this.x = rand(this.size.w, W - this.size.w); this.y = H + this.size.h; this.vel = [0, -vel]; }
+        if (this.dir === "down") { this.x = rand(this.size.w, W - this.size.w); this.y = -this.size.h; this.vel = [0, vel]; }
+        // nemo faces right, the blowfish faces left: face the swimming direction
+        this.flip = isBlowfish ? this.dir === "right" : this.dir === "left";
+      }
+      move(frames) {
+        this.x += this.vel[0] * frames;
+        this.y += this.vel[1] * frames;
+      }
+      offscreen() { // fishes spawn ~1 size outside the screen, so only drop them further out
+        return this.x < -150 || this.x > W + 150 || this.y < -150 || this.y > H + 150;
+      }
+      draw() {
+        const img = this.blowfish ? blowfishImg : fishImg;
+        const t = performance.now() / 1000;
+        const wobble = this.blowfish ? 1 + Math.sin(t * 8) * 0.06 : 1;
+        const w = this.size.w * wobble, h = this.size.h * wobble;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        if (this.flip) ctx.scale(-1, 1);
+        ctx.drawImage(img, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
+    }
+
+    function collides(f) {
+      return Math.abs(f.x - hand.x) * 2 < f.hit.w + HAND_HITBOX.w &&
+             Math.abs(f.y - hand.y) * 2 < f.hit.h + HAND_HITBOX.h;
+    }
+
+    // ui.py
+    function drawText(text, x, y, color, size, { center = false, right = false, shadow = "#fff" } = {}) {
+      ctx.font = `700 ${size}px Fredoka, Arial, sans-serif`;
+      ctx.textAlign = center ? "center" : right ? "right" : "left";
+      ctx.textBaseline = center ? "middle" : "top";
+      if (shadow) {
+        ctx.fillStyle = shadow;
+        ctx.fillText(text, x - 2, y + 2);
+      }
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+    }
+
+    // a button is pressed by a mouse click/tap, or by closing the hand over it
+    function button(y, text) {
+      const x = W / 2 - BUTTON.w / 2;
+      const over = (px, py) => px >= x && px <= x + BUTTON.w && py >= y && py <= y + BUTTON.h;
+      const hover = over(hand.x, hand.y) || over(pointer.x, pointer.y);
+      ctx.fillStyle = COLORS.buttonShadow;
+      ctx.fillRect(x - 6, y - 6, BUTTON.w, BUTTON.h);
+      ctx.fillStyle = hover ? COLORS.buttonHover : COLORS.button;
+      ctx.fillRect(x, y, BUTTON.w, BUTTON.h);
+      drawText(text, W / 2, y + BUTTON.h / 2, "#fff", 40, { center: true, shadow: COLORS.buttonShadow });
+      const clicked = (pointer.clicked && over(pointer.x, pointer.y)) ||
+        (hand.source === "camera" && hand.closed && !hand.wasClosed && over(hand.x, hand.y));
+      if (clicked) sounds.slap.play();
+      return clicked;
+    }
+
+    function drawHand() {
+      const size = hand.closed ? HAND_SIZE - 50 : HAND_SIZE;
+      ctx.drawImage(sharkImg, hand.x - size / 2, hand.y - size / 2, size, size);
+    }
+
+    function drawCover(img) {
+      ctx.drawImage(img, 0, 0, W, H);
+    }
+
+    // game.py
+    let state = "loading";
+    const loadingUntil = performance.now() + 1500;
+    let fishes = [], spawnTimer = 0, score = 0, startTime = 0, timeLeft = GAME_DURATION;
+    let countdownEnd = 0, best = bestScore("catching-fish"), newBest = false, finished = false;
+    let popups = []; // floating "+1" / "-1" where a fish was eaten
+
+    function reset() {
+      fishes = [];
+      spawnTimer = 0;
+      score = 0;
+      startTime = performance.now() / 1000;
+      timeLeft = GAME_DURATION;
+      popups = [];
+      newBest = false;
+      finished = false;
+    }
+
+    function spawn() {
+      const t = performance.now() / 1000;
+      if (t <= spawnTimer) return;
+      spawnTimer = t + FISH_SPAWN_TIME;
+      // the chance of a blowfish grows from 0 to 50% over the game
+      const chance = ((GAME_DURATION - timeLeft) / GAME_DURATION) * 100 / 2;
+      fishes.push(new Fish(Math.random() * 100 < chance));
+      if (timeLeft < GAME_DURATION / 2) fishes.push(new Fish(false));
+    }
+
+    let last = performance.now();
+    function frame(now) {
+      const frames = Math.min((now - last) / (1000 / 90), 5);
+      last = now;
+      updateHand();
+
+      if (state === "loading") {
+        drawCover(loadingBg);
+        drawText("CATCHING FISH", W / 2, 120, COLORS.title, 96, { center: true });
+        if (now > loadingUntil) state = "menu";
+      } else if (state === "menu") {
+        drawCover(menuBg);
+        drawText("CATCHING FISH", W / 2, 120, COLORS.title, 96, { center: true });
+        drawText("Elini aç-kapa: köpek balığı Nemo'yu yakalasın!", W / 2, 205, "#fff", 26,
+          { center: true, shadow: COLORS.title });
+        drawCatchHint(ctx, hints, W / 2, 452, "CATCHING");
+        if (best > 0) drawText(`Best : ${best}`, W - 20, H - 40, "#fff", 30, { shadow: COLORS.title, right: true });
+        if (button(280, "START")) {
+          music.play();
+          countdownEnd = now + 3000;
+          state = "countdown";
+        }
+        if (button(390 + BUTTON.h * 1.5, "Quit")) {
+          location.href = "../#catching-fish";
+        }
+        if (tracker.hands.length || pointer.active) drawHand();
+      } else if (state === "countdown") {
+        drawCover(bg);
+        drawHand();
+        drawCountdown(ctx, W, H, countdownEnd - now);
+        if (now >= countdownEnd) {
+          reset();
+          state = "game";
+        }
+      } else {
+        timeLeft = Math.max(Math.round((GAME_DURATION - (now / 1000 - startTime)) * 10) / 10, 0);
+        drawCover(bg);
+        for (const f of fishes) f.draw();
+        drawHand();
+        drawText(`Score : ${score}`, 5, 5, COLORS.text, 48);
+        drawText(`Time left : ${timeLeft.toFixed(1)}`, W / 2, 5, timeLeft < 5 ? COLORS.warn : COLORS.text, 48);
+
+        if (timeLeft > 0) {
+          spawn();
+          if (hand.closed) {
+            for (const f of fishes.filter(collides)) {
+              fishes.splice(fishes.indexOf(f), 1);
+              score += f.blowfish ? -BLOWFISH_PENALITY : 1;
+              popups.push({ x: f.x, y: f.y, text: f.blowfish ? `-${BLOWFISH_PENALITY}` : "+1", bad: f.blowfish, born: now });
+              sounds.slap.play();
+              if (f.blowfish) sounds.screaming.play();
+            }
+          }
+          for (const f of fishes) f.move(frames);
+          fishes = fishes.filter((f) => !f.offscreen());
+        } else {
+          if (!finished) {
+            finished = true;
+            newBest = score > best;
+            best = bestScore("catching-fish", score);
+          }
+          drawText("GAME OVER", W / 2, 280, "#fff", 110, { center: true, shadow: COLORS.title });
+          drawText(`Score : ${score}`, W / 2, 380, "#fff", 60, { center: true, shadow: COLORS.title });
+          drawText(newBest ? "NEW BEST!" : `Best : ${best}`, W / 2, 450, newBest ? "#ffd84d" : "#fff", 40,
+            { center: true, shadow: COLORS.title });
+          if (button(540, "Continue")) {
+            music.stop();
+            state = "menu";
+          }
+        }
+      }
+
+      popups = popups.filter((p) => now - p.born < 800);
+      for (const p of popups) {
+        const t = (now - p.born) / 800;
+        ctx.globalAlpha = 1 - t;
+        drawText(p.text, p.x, p.y - t * 60, p.bad ? "#ff4040" : "#ffd84d", 44, { center: true, shadow: "#000" });
+        ctx.globalAlpha = 1;
+      }
+
+      pointer.clicked = false;
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
