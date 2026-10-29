@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +14,7 @@
 
   <script type="module">
     import { HandTracker, fitCanvas, trackPointer, loadImage, loadSound, loadMusic,
-      drawCountdown, bestScore, loadHintIcons, drawCatchHint } from "../js/hands.js";
+      drawCountdown, bestScore, loadHintIcons, drawCatchHint, t } from "../js/hands.js";
 
     const W = 1366, H = 768;
     const HAND_SIZE = 128;
@@ -160,11 +160,11 @@
         if (now > loadingUntil) state = "menu";
       } else if (state === "menu") {
         ctx.drawImage(menuBg, 0, 0, W, H);
-        text("Meyvenin üstünde elini aç, sonra kapatıp yakala!", 698, 470, "#3b2414", 28, "center");
+        text(t("fruitSub"), 698, 470, "#3b2414", 28, "center");
         // sits on the empty pill drawn in the menu artwork
-        if (pillButton("START", 698, 385, 204, 46, 36)) startGame();
-        drawCatchHint(ctx, hints, 698, 580, "PICK UP");
-        if (best > 0) text(`Best : ${best}`, W - 30, H - 40, "#3b2414", 32, "right");
+        if (pillButton(t("start"), 698, 385, 204, 46, 36)) startGame();
+        drawCatchHint(ctx, hints, 698, 580, t("pickUp"));
+        if (best > 0) text(`${t("best")} : ${best}`, W - 30, H - 40, "#3b2414", 32, "right");
         drawHands();
       } else if (state === "countdown") {
         ctx.drawImage(bg, 0, 0, W, H);
@@ -211,20 +211,20 @@
 
         for (const f of fruits) ctx.drawImage(f.img, f.x, f.y);
         drawHands();
-        text(`Score : ${score}`, 50, 46, "#fff", 32);
+        text(`${t("score")} : ${score}`, 50, 46, "#fff", 32);
         if (remaining > 0) {
-          text(`Time: ${remaining}`, W - 30, 30, "#fff", 32, "right");
+          text(`${t("time")}: ${remaining}`, W - 30, 30, "#fff", 32, "right");
         } else {
           if (!finished) {
             finished = true;
             newBest = score > best;
             best = bestScore("fruit-ninja", score);
           }
-          text("Game Over!", W / 2, H / 2 - 80, "#ff0000", 100, "center");
-          text(`Score : ${score}`, W / 2, H / 2 + 5, "#fff", 48, "center");
-          text(newBest ? "NEW BEST!" : `Best : ${best}`, W / 2, H / 2 + 55, newBest ? "#FFD165" : "#fff", 34, "center");
-          if (pillButton("PLAY AGAIN", W / 2 - 170, H / 2 + 120)) startGame();
-          if (pillButton("MENU", W / 2 + 170, H / 2 + 120)) {
+          text(t("gameOverFruit"), W / 2, H / 2 - 80, "#ff0000", 100, "center");
+          text(`${t("score")} : ${score}`, W / 2, H / 2 + 5, "#fff", 48, "center");
+          text(newBest ? t("newBest") : `${t("best")} : ${best}`, W / 2, H / 2 + 55, newBest ? "#FFD165" : "#fff", 34, "center");
+          if (pillButton(t("playAgain"), W / 2 - 170, H / 2 + 120)) startGame();
+          if (pillButton(t("menu"), W / 2 + 170, H / 2 + 120)) {
             music.stop();
             state = "menu";
           }

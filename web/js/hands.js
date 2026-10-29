@@ -6,6 +6,46 @@ import {
   DrawingUtils,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
+// Same language choice as the site (TR/EN switch); first visit follows the browser language
+export const LANG = (() => {
+  try { const l = localStorage.getItem("tricoders-lang"); if (l === "tr" || l === "en") return l; } catch {}
+  return (navigator.languages || [navigator.language]).some((l) => /^tr\b/i.test(l)) ? "tr" : "en";
+})();
+
+const STRINGS = {
+  en: {
+    back: "← Back to site", camOpening: "Opening camera…", camToggle: "Click to enlarge / shrink",
+    camDenied: "Camera permission denied. You can play with mouse/keyboard.",
+    camMissing: "No camera found. You can play with mouse/keyboard.",
+    score: "Score", timeLeft: "Time left", time: "Time", best: "Best", newBest: "NEW BEST!",
+    start: "START", quit: "Quit", continue: "Continue", gameOver: "GAME OVER", gameOverFruit: "Game Over!",
+    playAgain: "PLAY AGAIN", menu: "MENU",
+    fishSub: "Open and close your hand: the shark catches Nemo!",
+    fruitSub: "Open your hand over a fruit, then close it to grab it!",
+    catching: "CATCHING", pickUp: "PICK UP",
+    hint: "HINT:", left: "GO LEFT", right: "GO RIGHT", rotate: "ROTATES", noHand: "NO HAND", down: "GO DOWN",
+    nextShape: "Next Shape", tetrisStart: "Start", clickToStart: "Click to start", tetrisQuit: "QUIT", youLost: "YOU LOST!",
+  },
+  tr: {
+    back: "← Siteye dön", camOpening: "Kamera açılıyor…", camToggle: "Büyütmek / küçültmek için tıkla",
+    camDenied: "Kamera izni verilmedi. Fare/klavye ile oynayabilirsin.",
+    camMissing: "Kamera bulunamadı. Fare/klavye ile oynayabilirsin.",
+    score: "Skor", timeLeft: "Kalan süre", time: "Süre", best: "En iyi", newBest: "YENİ REKOR!",
+    start: "BAŞLA", quit: "Çıkış", continue: "Devam", gameOver: "OYUN BİTTİ", gameOverFruit: "Oyun Bitti!",
+    playAgain: "TEKRAR", menu: "MENÜ",
+    fishSub: "Elini aç-kapa: köpek balığı Nemo'yu yakalasın!",
+    fruitSub: "Meyvenin üstünde elini aç, sonra kapatıp yakala!",
+    catching: "YAKALA", pickUp: "KAP",
+    hint: "İPUCU:", left: "SOLA", right: "SAĞA", rotate: "DÖNDÜR", noHand: "EL YOK", down: "AŞAĞI",
+    nextShape: "Sıradaki", tetrisStart: "Başla", clickToStart: "Başlamak için tıkla", tetrisQuit: "ÇIKIŞ", youLost: "KAYBETTİN!",
+  },
+};
+export const t = (key) => STRINGS[LANG][key] ?? STRINGS.en[key] ?? key;
+
+document.documentElement.lang = LANG;
+const backLink = document.querySelector(".back-link");
+if (backLink) backLink.textContent = t("back");
+
 const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
@@ -29,7 +69,7 @@ export class HandTracker {
     this.video.playsInline = true;
     this.video.muted = true;
     this.buildPreview();
-    this.setStatus("Kamera açılıyor…");
+    this.setStatus(t("camOpening"));
 
     const [stream, landmarker] = await Promise.all([
       navigator.mediaDevices.getUserMedia({
@@ -88,7 +128,7 @@ export class HandTracker {
     const status = document.createElement("div");
     status.className = "cam-status";
     box.append(canvas, status);
-    box.title = "Büyütmek / küçültmek için tıkla";
+    box.title = t("camToggle");
     box.addEventListener("click", () => box.classList.toggle("big"));
     document.body.append(box);
     this.preview = { box, canvas, ctx: canvas.getContext("2d"), status };
@@ -134,8 +174,8 @@ export class HandTracker {
     const denied = err && (err.name === "NotAllowedError" || err.name === "SecurityError");
     this.setStatus(
       denied
-        ? "Kamera izni verilmedi. Fare/klavye ile oynayabilirsin."
-        : "Kamera bulunamadı. Fare/klavye ile oynayabilirsin."
+        ? t("camDenied")
+        : t("camMissing")
     );
   }
 }

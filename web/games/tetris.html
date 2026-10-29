@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +14,7 @@
 
   <script type="module">
     import { HandTracker, fitCanvas, trackPointer, loadImage, loadMusic,
-      drawCountdown, bestScore, loadHintIcons } from "../js/hands.js";
+      drawCountdown, bestScore, loadHintIcons, t } from "../js/hands.js";
 
     const S_WIDTH = 1080, S_HEIGHT = 760;
     const PLAY_WIDTH = 300, PLAY_HEIGHT = 600, BLOCK = 30;
@@ -124,7 +124,7 @@
 
       const sx = TOP_LEFT_X + PLAY_WIDTH + 50;
       const sy = TOP_LEFT_Y + PLAY_HEIGHT / 2 - 100;
-      text(`Score: ${score}`, sx + 20, sy + 160, "#000", 34);
+      text(`${t("score")}: ${score}`, sx + 20, sy + 160, "#000", 34);
 
       for (let i = 0; i < grid.length; i++) {
         for (let j = 0; j < grid[i].length; j++) {
@@ -159,16 +159,16 @@
       format.forEach((line, i) => [...line].forEach((c, j) => {
         if (c === "0") ctx.fillRect(sx + j * BLOCK, sy + i * BLOCK, BLOCK, BLOCK);
       }));
-      text("Next Shape", sx + 10, sy - 40, "#000", 34);
+      text(t("nextShape"), sx + 10, sy - 40, "#000", 34);
     }
 
     // HINT panel with the same hand icons as the site; the gesture the camera sees right now is
     // highlighted, with a bar that fills up until the move happens
     const HINTS = [
-      { key: "left", icon: "thumb", label: "GO LEFT", arrow: "left", need: 4 },
-      { key: "right", icon: "pinky", label: "GO RIGHT", arrow: "right", need: 4 },
-      { key: "rotate", icon: "open", label: "ROTATES", arrow: "rotate", need: 4 },
-      { key: "down", icon: null, label: "GO DOWN", arrow: "down", need: 5 },
+      { key: "left", icon: "thumb", label: t("left"), arrow: "left", need: 4 },
+      { key: "right", icon: "pinky", label: t("right"), arrow: "right", need: 4 },
+      { key: "rotate", icon: "open", label: t("rotate"), arrow: "rotate", need: 4 },
+      { key: "down", icon: null, label: t("down"), arrow: "down", need: 5 },
     ];
     function drawArrow(kind, cx, cy) {
       ctx.save();
@@ -190,8 +190,9 @@
       ctx.roundRect(x, y, 340, 206, 16);
       ctx.fill();
       ctx.fillStyle = "#fde9d6";
-      ctx.fillRect(x + 14, y + 12, 56, 26);
-      text("HINT:", x + 18, y + 15, "#000", 20);
+      ctx.font = "700 20px Fredoka, Arial, sans-serif";
+      ctx.fillRect(x + 14, y + 12, ctx.measureText(t("hint")).width + 9, 26);
+      text(t("hint"), x + 18, y + 15, "#000", 20);
       HINTS.forEach((h, i) => {
         const cx = x + 50 + i * 80;
         const active = live && gesture === h.key;
@@ -205,7 +206,7 @@
           ctx.fillRect(cx - 30, y + 186, 60 * progress, 4);
         }
         if (h.icon) ctx.drawImage(hintIcons[h.icon], cx - 24, y + 52, 48, 56);
-        else text("NO HAND", cx, y + 80, "#000", 15, { align: "center", baseline: "middle" });
+        else text(t("noHand"), cx, y + 80, "#000", 15, { align: "center", baseline: "middle" });
         text(h.label, cx, y + 124, "#f88615", 14, { align: "center", baseline: "middle" });
         drawArrow(h.arrow, cx, y + 156);
       });
@@ -214,7 +215,7 @@
     // the QUIT label sits on the pink pill painted in the background
     const QUIT = { x: 122, y: 384, w: 154, h: 32 };
     function drawQuit() {
-      text("QUIT", QUIT.x + QUIT.w / 2, QUIT.y + QUIT.h / 2 + 1, "#fff", 26, { align: "center", baseline: "middle" });
+      text(t("tetrisQuit"), QUIT.x + QUIT.w / 2, QUIT.y + QUIT.h / 2 + 1, "#fff", 26, { align: "center", baseline: "middle" });
     }
     const inRect = (r, px, py) => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
 
@@ -292,10 +293,10 @@
 
       if (state === "menu") {
         ctx.drawImage(menuBg, 0, 0, S_WIDTH, S_HEIGHT);
-        drawTextMiddle("Start", 44, "#fff");
-        text("Başlamak için tıkla", S_WIDTH / 2, 510, "#555", 22, { align: "center", weight: 500 });
+        drawTextMiddle(t("tetrisStart"), 44, "#fff");
+        text(t("clickToStart"), S_WIDTH / 2, 510, "#555", 22, { align: "center", weight: 500 });
         drawHelp(S_WIDTH / 2 - 170, 540, tracker.ready);
-        if (best > 0) text(`Best: ${best}`, S_WIDTH - 30, 30, "#555", 26, { align: "right" });
+        if (best > 0) text(`${t("best")}: ${best}`, S_WIDTH - 30, 30, "#555", 26, { align: "right" });
         if (pointer.clicked) startGame();
       } else if (state === "countdown") {
         drawWindow(createGrid(locked), 0);
@@ -365,8 +366,8 @@
         drawWindow(createGrid(locked), score);
         drawNextShape(nextPiece);
         drawHelp(22, 160, false);
-        drawTextMiddle("YOU LOST!", 70, "rgb(255,225,225)");
-        text(newBest ? "NEW BEST!" : `Best: ${best}`, TOP_LEFT_X + PLAY_WIDTH / 2, TOP_LEFT_Y + PLAY_HEIGHT / 2 + 60,
+        drawTextMiddle(t("youLost"), 70, "rgb(255,225,225)");
+        text(newBest ? t("newBest") : `${t("best")}: ${best}`, TOP_LEFT_X + PLAY_WIDTH / 2, TOP_LEFT_Y + PLAY_HEIGHT / 2 + 60,
           newBest ? "#ffd84d" : "#fff", 32, { align: "center", baseline: "middle" });
         if (now - lostAt > 2500) {
           music.stop();

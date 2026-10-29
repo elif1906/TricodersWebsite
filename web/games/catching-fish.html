@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +14,7 @@
 
   <script type="module">
     import { HandTracker, fitCanvas, trackPointer, loadImage, loadSound, loadMusic,
-      drawCountdown, bestScore, loadHintIcons, drawCatchHint } from "../js/hands.js";
+      drawCountdown, bestScore, loadHintIcons, drawCatchHint, t } from "../js/hands.js";
 
     // settings.py
     const W = 1200, H = 700;
@@ -193,16 +193,16 @@
       } else if (state === "menu") {
         drawCover(menuBg);
         drawText("CATCHING FISH", W / 2, 120, COLORS.title, 96, { center: true });
-        drawText("Elini aç-kapa: köpek balığı Nemo'yu yakalasın!", W / 2, 205, "#fff", 26,
+        drawText(t("fishSub"), W / 2, 205, "#fff", 26,
           { center: true, shadow: COLORS.title });
-        drawCatchHint(ctx, hints, W / 2, 452, "CATCHING");
-        if (best > 0) drawText(`Best : ${best}`, W - 20, H - 40, "#fff", 30, { shadow: COLORS.title, right: true });
-        if (button(280, "START")) {
+        drawCatchHint(ctx, hints, W / 2, 452, t("catching"));
+        if (best > 0) drawText(`${t("best")} : ${best}`, W - 20, H - 40, "#fff", 30, { shadow: COLORS.title, right: true });
+        if (button(280, t("start"))) {
           music.play();
           countdownEnd = now + 3000;
           state = "countdown";
         }
-        if (button(390 + BUTTON.h * 1.5, "Quit")) {
+        if (button(390 + BUTTON.h * 1.5, t("quit"))) {
           location.href = "../#catching-fish";
         }
         if (tracker.hands.length || pointer.active) drawHand();
@@ -219,8 +219,8 @@
         drawCover(bg);
         for (const f of fishes) f.draw();
         drawHand();
-        drawText(`Score : ${score}`, 5, 5, COLORS.text, 48);
-        drawText(`Time left : ${timeLeft.toFixed(1)}`, W / 2, 5, timeLeft < 5 ? COLORS.warn : COLORS.text, 48);
+        drawText(`${t("score")} : ${score}`, 5, 5, COLORS.text, 48);
+        drawText(`${t("timeLeft")} : ${timeLeft.toFixed(1)}`, W / 2, 5, timeLeft < 5 ? COLORS.warn : COLORS.text, 48);
 
         if (timeLeft > 0) {
           spawn();
@@ -241,11 +241,11 @@
             newBest = score > best;
             best = bestScore("catching-fish", score);
           }
-          drawText("GAME OVER", W / 2, 280, "#fff", 110, { center: true, shadow: COLORS.title });
-          drawText(`Score : ${score}`, W / 2, 380, "#fff", 60, { center: true, shadow: COLORS.title });
-          drawText(newBest ? "NEW BEST!" : `Best : ${best}`, W / 2, 450, newBest ? "#ffd84d" : "#fff", 40,
+          drawText(t("gameOver"), W / 2, 280, "#fff", 110, { center: true, shadow: COLORS.title });
+          drawText(`${t("score")} : ${score}`, W / 2, 380, "#fff", 60, { center: true, shadow: COLORS.title });
+          drawText(newBest ? t("newBest") : `${t("best")} : ${best}`, W / 2, 450, newBest ? "#ffd84d" : "#fff", 40,
             { center: true, shadow: COLORS.title });
-          if (button(540, "Continue")) {
+          if (button(540, t("continue"))) {
             music.stop();
             state = "menu";
           }

@@ -39,7 +39,30 @@
     .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px 64px; }
 
     /* ---------- header + nav ---------- */
-    header { padding: 28px 0 6px; display: flex; justify-content: center; }
+    header { padding: 28px 0 6px; display: flex; justify-content: center; position: relative; }
+    .lang {
+      position: absolute;
+      right: 0;
+      top: 30px;
+      display: flex;
+      padding: 4px;
+      gap: 2px;
+      border-radius: 999px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .lang button {
+      border: 0;
+      background: none;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-family: "Fredoka", sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .lang button[aria-pressed="true"] { background: var(--orange); color: #fff; }
     header img { width: min(360px, 76%); height: auto; }
     nav {
       display: flex;
@@ -380,6 +403,27 @@
     .entries { margin-top: 20px; font-size: 14px; color: var(--muted); }
     .entries div { padding: 10px 0; border-top: 1px solid var(--border); }
 
+    .linkedin {
+      max-width: 860px;
+      margin: 28px auto 0;
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 30px 32px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .linkedin h3 { margin: 0 0 6px; font-family: "Fredoka", sans-serif; font-size: 22px; font-weight: 600; }
+    .linkedin p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+    .linkedin iframe {
+      width: 100%;
+      max-width: 520px;
+      height: 760px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--bg);
+    }
+    .linkedin .open { display: inline-block; margin-top: 14px; font-weight: 600; font-size: 14px; color: #0a66c2; }
+
     footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 0 36px; }
 
     /* ---------- responsive ---------- */
@@ -394,6 +438,10 @@
     }
     @media (max-width: 600px) {
       .wrap { padding: 0 16px 48px; }
+      header { flex-direction: column; align-items: center; gap: 12px; }
+      .lang { position: static; }
+      .linkedin { padding: 22px 12px; }
+      .linkedin iframe { height: 640px; }
       nav { flex-wrap: wrap; }
       nav a { flex: 1 1 30%; font-size: 15px; padding: 10px 4px; }
       .grid2 { grid-template-columns: 1fr; }
@@ -408,14 +456,20 @@
 </head>
 <body>
   <div class="wrap">
-    <header><img src="assets/site/logo.png" alt="Tricoders"></header>
+    <header>
+      <img src="assets/site/logo.png" alt="Tricoders">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="tr">TR</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+    </header>
 
     <nav>
-      <a href="#home" data-tab="home">Home</a>
+      <a href="#home" data-tab="home" data-i18n="nav.home">Home</a>
       <a href="#catching-fish" data-tab="catching-fish">Catching Fish</a>
       <a href="#fruit-ninja" data-tab="fruit-ninja">Fruit Ninja</a>
       <a href="#tetris" data-tab="tetris">Tetris</a>
-      <a href="#about" data-tab="about">About</a>
+      <a href="#about" data-tab="about" data-i18n="nav.about">About</a>
     </nav>
 
     <!-- HOME -->
@@ -433,13 +487,13 @@
               <rect x="110" y="105" width="150" height="90" rx="45"/>
             </g>
           </svg>
-          <h1>REAL-LIFE GAME</h1>
-          <p class="tagline">There's a Little Game in All of Us.<br>Find yourself.</p>
+          <h1 data-i18n="hero.title">REAL-LIFE GAME</h1>
+          <p class="tagline" data-i18n="hero.tagline">There's a Little Game in All of Us.<br>Find yourself.</p>
           <div class="hero-cta">
-            <a class="btn orange" href="#games">Play now</a>
-            <a class="btn ghost" href="#about">Who are we?</a>
+            <a class="btn orange" href="#games" data-i18n="hero.play">Play now</a>
+            <a class="btn ghost" href="#about" data-i18n="hero.who">Who are we?</a>
           </div>
-          <div class="award"><span>🏆</span> Engineering Project of the Year '23 · Beykoz University</div>
+          <div class="award"><span>🏆</span> <em data-i18n="award">Engineering Project of the Year '23 · Beykoz University</em></div>
         </div>
         <div class="cluster" aria-hidden="true">
           <div class="orb o1"><img src="assets/site/game-tetris.jpg" alt=""></div>
@@ -448,35 +502,35 @@
         </div>
       </div>
 
-      <h2 class="section-title" id="games">OUR GAMES</h2>
-      <p class="section-sub">No keyboard, no controller. Just your hands and a webcam.</p>
+      <h2 class="section-title" id="games" data-i18n="games.title">OUR GAMES</h2>
+      <p class="section-sub" data-i18n="games.sub">No keyboard, no controller. Just your hands and a webcam.</p>
       <div class="cards">
         <div class="card">
           <div class="orb"><img src="assets/site/game-fish.jpg" alt="Catching Fish"></div>
           <h3>Catching Fish</h3>
-          <p>Steer the shark with your hand and close it to catch Nemo. Watch out for the blowfish!</p>
-          <div class="links"><a class="btn blue" href="games/catching-fish.html">Play</a><a class="more" href="#catching-fish">How to play →</a></div>
+          <p data-i18n="card.fish">Steer the shark with your hand and close it to catch Nemo. Watch out for the blowfish!</p>
+          <div class="links"><a class="btn blue" href="games/catching-fish.html" data-i18n="card.play">Play</a><a class="more" href="#catching-fish" data-i18n="card.how">How to play →</a></div>
         </div>
         <div class="card">
           <div class="orb"><img src="assets/site/game-fruit.jpg" alt="Fruit Ninja"></div>
           <h3>Fruit Ninja</h3>
-          <p>Use both hands: open over a fruit, then close your hand to pick it up before time runs out.</p>
-          <div class="links"><a class="btn red" href="games/fruit-ninja.html">Play</a><a class="more" href="#fruit-ninja">How to play →</a></div>
+          <p data-i18n="card.fruit">Use both hands: open over a fruit, then close your hand to pick it up before time runs out.</p>
+          <div class="links"><a class="btn red" href="games/fruit-ninja.html" data-i18n="card.play">Play</a><a class="more" href="#fruit-ninja" data-i18n="card.how">How to play →</a></div>
         </div>
         <div class="card">
           <div class="orb"><img src="assets/site/game-tetris.jpg" alt="Tetris"></div>
           <h3>Tetris</h3>
-          <p>The 1984 classic, steered with hand gestures. Move, rotate and drop the blocks without touching a key.</p>
-          <div class="links"><a class="btn green" href="games/tetris.html">Play</a><a class="more" href="#tetris">How to play →</a></div>
+          <p data-i18n="card.tetris">The 1984 classic, steered with hand gestures. Move, rotate and drop the blocks without touching a key.</p>
+          <div class="links"><a class="btn green" href="games/tetris.html" data-i18n="card.play">Play</a><a class="more" href="#tetris" data-i18n="card.how">How to play →</a></div>
         </div>
       </div>
 
-      <h2 class="section-title">HOW IT WORKS</h2>
-      <p class="section-sub">Everything runs in your browser. The camera image never leaves your device.</p>
+      <h2 class="section-title" data-i18n="how.title">HOW IT WORKS</h2>
+      <p class="section-sub" data-i18n="how.sub">Everything runs in your browser. The camera image never leaves your device.</p>
       <div class="steps">
-        <div class="step"><b>1</b><div><h4>Pick a game</h4><p>Choose Catching Fish, Fruit Ninja or Tetris and press Play.</p></div></div>
-        <div class="step"><b>2</b><div><h4>Allow the camera</h4><p>Your browser asks once. No camera? Mouse and keyboard work too.</p></div></div>
-        <div class="step"><b>3</b><div><h4>Play with your hands</h4><p>MediaPipe tracks 21 points on each hand in real time.</p></div></div>
+        <div class="step"><b>1</b><div><h4 data-i18n="how.1t">Pick a game</h4><p data-i18n="how.1">Choose Catching Fish, Fruit Ninja or Tetris and press Play.</p></div></div>
+        <div class="step"><b>2</b><div><h4 data-i18n="how.2t">Allow the camera</h4><p data-i18n="how.2">Your browser asks once. No camera? Mouse and keyboard work too.</p></div></div>
+        <div class="step"><b>3</b><div><h4 data-i18n="how.3t">Play with your hands</h4><p data-i18n="how.3">MediaPipe tracks 21 points on each hand in real time.</p></div></div>
       </div>
     </section>
 
@@ -486,20 +540,20 @@
         <div class="orb"><img src="assets/site/game-fish.jpg" alt="A shark chasing Nemo"></div>
         <div>
           <h2>Catching Fish</h2>
-          <p class="desc"><span class="hl">The game is catching fish. An exciting adventure inspired by the beloved film "Finding Nemo". In order not to starve the shark, you have to eat the Nemo. Just open and close your hand for the shark to catch the Nemo. You have 60 seconds, be quick. Be careful, don't eat the blowfish while you try to catch the Nemo.</span></p>
+          <p class="desc"><span class="hl" data-i18n="desc.fish">The game is catching fish. An exciting adventure inspired by the beloved film "Finding Nemo". In order not to starve the shark, you have to eat the Nemo. Just open and close your hand for the shark to catch the Nemo. You have 60 seconds, be quick. Be careful, don't eat the blowfish while you try to catch the Nemo.</span></p>
           <div class="hint">
-            <span class="hint-label">HINT:</span>
+            <span class="hint-label" data-i18n="hint.title">HINT:</span>
             <div class="hint-row center">
               <div class="hint-item"><img src="assets/hints/open.svg" alt="Open hand"></div>
-              <div class="hint-item"><svg viewBox="0 0 120 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 52 C20 20 48 12 58 30 C66 46 46 50 50 34 C56 14 86 8 108 16"/><path d="M96 6 L110 16 L98 28"/></svg><b>CATCHING</b></div>
+              <div class="hint-item"><svg viewBox="0 0 120 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 52 C20 20 48 12 58 30 C66 46 46 50 50 34 C56 14 86 8 108 16"/><path d="M96 6 L110 16 L98 28"/></svg><b data-i18n="hint.catching">CATCHING</b></div>
               <div class="hint-item"><img src="assets/hints/fist.svg" alt="Closed hand"></div>
             </div>
           </div>
           <div class="actions">
-            <a class="btn blue" href="games/catching-fish.html">PLAY CATCHING FISH</a>
-            <a class="btn ghost" href="https://github.com/elif1906/Catching-fish" target="_blank" rel="noopener">Download</a>
+            <a class="btn blue" href="games/catching-fish.html" data-i18n="play.fish">PLAY CATCHING FISH</a>
+            <a class="btn ghost" href="https://github.com/elif1906/Catching-fish" target="_blank" rel="noopener" data-i18n="download">Download</a>
           </div>
-          <p class="note">Kameran açılır, elini aç-kapa yaparak köpek balığını yönet. Kamera yoksa fare ile de oynanır.</p>
+          <p class="note" data-i18n="note.fish"></p>
         </div>
       </div>
     </section>
@@ -510,20 +564,20 @@
         <div class="orb"><img src="assets/site/game-fruit.jpg" alt="An apple ninja with fruits"></div>
         <div>
           <h2>Fruit Ninja</h2>
-          <p class="desc"><span class="hl">Are you seeking an immersive gaming experience? Discover the thrill of playing this game using both hands, a new approach that deviates from the conventional phone-based gameplay. Envision your hands transforming into razor-sharp blades as you obliterate a variety of fruits, unlocking a sense of exhilaration like never before.</span></p>
+          <p class="desc"><span class="hl" data-i18n="desc.fruit">Are you seeking an immersive gaming experience? Discover the thrill of playing this game using both hands, a new approach that deviates from the conventional phone-based gameplay. Envision your hands transforming into razor-sharp blades as you obliterate a variety of fruits, unlocking a sense of exhilaration like never before.</span></p>
           <div class="hint">
-            <span class="hint-label">HINT:</span>
+            <span class="hint-label" data-i18n="hint.title">HINT:</span>
             <div class="hint-row center">
               <div class="hint-item"><img src="assets/hints/open.svg" alt="Open hand"></div>
-              <div class="hint-item"><svg viewBox="0 0 120 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 52 C20 20 48 12 58 30 C66 46 46 50 50 34 C56 14 86 8 108 16"/><path d="M96 6 L110 16 L98 28"/></svg><b>PICK UP</b></div>
+              <div class="hint-item"><svg viewBox="0 0 120 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 52 C20 20 48 12 58 30 C66 46 46 50 50 34 C56 14 86 8 108 16"/><path d="M96 6 L110 16 L98 28"/></svg><b data-i18n="hint.pickup">PICK UP</b></div>
               <div class="hint-item"><img src="assets/hints/fist.svg" alt="Closed hand"></div>
             </div>
           </div>
           <div class="actions">
-            <a class="btn red" href="games/fruit-ninja.html">PLAY FRUIT NINJA</a>
-            <a class="btn ghost" href="https://github.com/elif1906/FruitAl" target="_blank" rel="noopener">Download</a>
+            <a class="btn red" href="games/fruit-ninja.html" data-i18n="play.fruit">PLAY FRUIT NINJA</a>
+            <a class="btn ghost" href="https://github.com/elif1906/FruitAl" target="_blank" rel="noopener" data-i18n="download">Download</a>
           </div>
-          <p class="note">İki elinle de oynayabilirsin: meyvenin üstünde elini aç, sonra kapatıp yakala.</p>
+          <p class="note" data-i18n="note.fruit"></p>
         </div>
       </div>
     </section>
@@ -534,71 +588,177 @@
         <div class="orb"><img src="assets/site/game-tetris.jpg" alt="Colourful tetris blocks"></div>
         <div>
           <h2>Tetris</h2>
-          <p class="desc"><span class="hl">Did you know that the first Tetris game appeared in 1984? However, we have revitalized this beloved game using cutting-edge technologies, bringing it into the modern era of 2023. All you have to do is give directions to the blocks with your hands. Experience the thrill of this ambitious adaptation, as you challenge yourself.</span></p>
+          <p class="desc"><span class="hl" data-i18n="desc.tetris">Did you know that the first Tetris game appeared in 1984? However, we have revitalized this beloved game using cutting-edge technologies, bringing it into the modern era of 2023. All you have to do is give directions to the blocks with your hands. Experience the thrill of this ambitious adaptation, as you challenge yourself.</span></p>
           <div class="hint">
-            <span class="hint-label">HINT:</span>
+            <span class="hint-label" data-i18n="hint.title">HINT:</span>
             <div class="hint-row">
-              <div class="hint-item"><img src="assets/hints/thumb.svg" alt="Fist with thumb out"><b>GO LEFT</b><svg viewBox="0 0 120 30" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M112 15 H10 M24 4 L10 15 L24 26"/></svg></div>
-              <div class="hint-item"><img src="assets/hints/pinky.svg" alt="Fist with pinky up"><b>GO RIGHT</b><svg viewBox="0 0 120 30" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 15 H110 M96 4 L110 15 L96 26"/></svg></div>
-              <div class="hint-item"><img src="assets/hints/open.svg" alt="Open hand"><b>ROTATES</b><svg class="rot" viewBox="0 0 60 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M44 16 A20 20 0 1 1 16 18"/><path d="M8 10 L16 18 L6 24"/></svg></div>
-              <div class="hint-item"><span class="no-hand">NO HAND</span><b>GO DOWN</b><svg class="down" viewBox="0 0 30 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 V54 M4 42 L15 54 L26 42"/></svg></div>
+              <div class="hint-item"><img src="assets/hints/thumb.svg" alt="Fist with thumb out"><b data-i18n="hint.left">GO LEFT</b><svg viewBox="0 0 120 30" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M112 15 H10 M24 4 L10 15 L24 26"/></svg></div>
+              <div class="hint-item"><img src="assets/hints/pinky.svg" alt="Fist with pinky up"><b data-i18n="hint.right">GO RIGHT</b><svg viewBox="0 0 120 30" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 15 H110 M96 4 L110 15 L96 26"/></svg></div>
+              <div class="hint-item"><img src="assets/hints/open.svg" alt="Open hand"><b data-i18n="hint.rotate">ROTATES</b><svg class="rot" viewBox="0 0 60 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M44 16 A20 20 0 1 1 16 18"/><path d="M8 10 L16 18 L6 24"/></svg></div>
+              <div class="hint-item"><span class="no-hand" data-i18n="hint.nohand">NO HAND</span><b data-i18n="hint.down">GO DOWN</b><svg class="down" viewBox="0 0 30 60" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 V54 M4 42 L15 54 L26 42"/></svg></div>
             </div>
           </div>
           <div class="actions">
-            <a class="btn green" href="games/tetris.html">PLAY TETRIS</a>
-            <a class="btn ghost" href="https://github.com/elif1906/TetrisAl" target="_blank" rel="noopener">Download</a>
+            <a class="btn green" href="games/tetris.html" data-i18n="play.tetris">PLAY TETRIS</a>
+            <a class="btn ghost" href="https://github.com/elif1906/TetrisAl" target="_blank" rel="noopener" data-i18n="download">Download</a>
           </div>
-          <p class="note">Blokları el hareketlerinle yönet. Klavyenin ok tuşları da çalışır.</p>
+          <p class="note" data-i18n="note.tetris"></p>
         </div>
       </div>
     </section>
 
     <!-- ABOUT -->
     <section id="about">
-      <h2 class="section-title" style="margin-top: 8px">WHO ARE WE ?</h2>
-      <p class="section-sub">Beykoz University · 2022–2023</p>
+      <h2 class="section-title" style="margin-top: 8px" data-i18n="about.title">WHO ARE WE ?</h2>
+      <p class="section-sub" data-i18n="about.sub">Beykoz University · 2022–2023</p>
       <div class="team">
         <div class="member">
           <div class="photo"><img src="assets/site/team-sevval.jpg" alt="Şevval Kalkavan"></div>
-          <div class="info"><div class="name">Şevval Kalkavan</div><div class="role">Computer Vision</div></div>
+          <div class="info"><div class="name">Şevval Kalkavan</div><div class="role" data-i18n="role.cv">Computer Vision</div></div>
         </div>
         <div class="member">
           <div class="photo"><img src="assets/site/team-kubra.jpg" alt="Kübra Bahadır"></div>
-          <div class="info"><div class="name">Kübra Bahadır</div><div class="role">Web Interface Design</div></div>
+          <div class="info"><div class="name">Kübra Bahadır</div><div class="role" data-i18n="role.web">Web Interface Design</div></div>
         </div>
         <div class="member">
           <div class="photo"><img src="assets/site/team-elif.jpg" alt="Elif Nur Aslıhan Celepoğlu"></div>
-          <div class="info"><div class="name">Elif Nur Aslıhan Celepoğlu</div><div class="role">Game Development</div></div>
+          <div class="info"><div class="name">Elif Nur Aslıhan Celepoğlu</div><div class="role" data-i18n="role.game">Game Development</div></div>
         </div>
       </div>
 
       <div class="story">
-        <h3>🏆 Engineering Project of the Year '23</h3>
-        <p>Tricoders, a real-life game controlled with human hand gestures, received the Engineering Project of the Year award at Beykoz University in the 2022–2023 third-grade category.</p>
-        <p>We wanted to re-present familiar games with an innovative idea: instead of a keyboard, the games follow your hand movements, so you can experience them in a more physical way.</p>
+        <h3 data-i18n="story.title">🏆 Engineering Project of the Year '23</h3>
+        <p data-i18n="story.1">Tricoders, a real-life game controlled with human hand gestures, received the Engineering Project of the Year award at Beykoz University in the 2022–2023 third-grade category.</p>
+        <p data-i18n="story.2">We wanted to re-present familiar games with an innovative idea: instead of a keyboard, the games follow your hand movements, so you can experience them in a more physical way.</p>
         <div class="tags"><span>Python</span><span>OpenCV</span><span>MediaPipe</span><span>Pygame</span><span>Streamlit</span><span>JavaScript</span></div>
       </div>
 
+      <div class="linkedin">
+        <h3 data-i18n="li.title">Tricoders on LinkedIn</h3>
+        <p data-i18n="li.sub">Our award, as announced by our instructor Mustafa Yıldız.</p>
+        <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7086584277244518400" title="LinkedIn post about the Tricoders award" loading="lazy" allowfullscreen></iframe>
+        <br><a class="open" href="https://www.linkedin.com/posts/elif-nur-asl%C4%B1han-celepo%C4%9Flu_share-7086584277244518400-gU6V/" target="_blank" rel="noopener" data-i18n="li.open">Open on LinkedIn ↗</a>
+      </div>
+
       <form class="feedback" id="feedback">
-        <h3>We are waiting for your comments 😎</h3>
+        <h3 data-i18n="form.title">We are waiting for your comments 😎</h3>
         <div class="grid2">
-          <div><label for="f-name">Name</label><input id="f-name" required></div>
-          <div><label for="f-last">Last name</label><input id="f-last"></div>
-          <div><label for="f-age">Age</label><input id="f-age" type="number" min="0" max="120"></div>
-          <div><label for="f-game">Favorite game</label><input id="f-game"></div>
-          <div><label for="f-fish">Catching Fish score [0–10]</label><input id="f-fish" type="number" min="0" max="10"></div>
-          <div><label for="f-fruit">Fruit Ninja score [0–10]</label><input id="f-fruit" type="number" min="0" max="10"></div>
-          <div><label for="f-tetris">Tetris score [0–10]</label><input id="f-tetris" type="number" min="0" max="10"></div>
+          <div><label for="f-name" data-i18n="form.name">Name</label><input id="f-name" required></div>
+          <div><label for="f-last" data-i18n="form.last">Last name</label><input id="f-last"></div>
+          <div><label for="f-age" data-i18n="form.age">Age</label><input id="f-age" type="number" min="0" max="120"></div>
+          <div><label for="f-game" data-i18n="form.game">Favorite game</label><input id="f-game"></div>
+          <div><label for="f-fish" data-i18n="form.fish">Catching Fish score [0–10]</label><input id="f-fish" type="number" min="0" max="10"></div>
+          <div><label for="f-fruit" data-i18n="form.fruit">Fruit Ninja score [0–10]</label><input id="f-fruit" type="number" min="0" max="10"></div>
+          <div><label for="f-tetris" data-i18n="form.tetris">Tetris score [0–10]</label><input id="f-tetris" type="number" min="0" max="10"></div>
         </div>
-        <button type="submit">Sign the form</button><span class="success" id="f-ok" hidden>Form signed successfully.</span>
+        <button type="submit" data-i18n="form.submit">Sign the form</button><span class="success" id="f-ok" data-i18n="form.ok" hidden>Form signed successfully.</span>
         <div class="entries" id="entries"></div>
       </form>
     </section>
 
-    <footer>Tricoders · Beykoz University · <a href="https://github.com/elif1906/TricodersWebsite" target="_blank" rel="noopener">GitHub</a></footer>
+    <footer><span data-i18n="footer">Tricoders · Beykoz University</span> · <a href="https://github.com/elif1906/TricodersWebsite" target="_blank" rel="noopener">GitHub</a></footer>
   </div>
 
   <script>
+    // ---------- languages: Turkish / English ----------
+    const I18N = {
+      en: {
+        "doc.title": "Tricoders · Real-Life Games",
+        "nav.home": "Home", "nav.about": "About",
+        "hero.title": "REAL-LIFE GAME",
+        "hero.tagline": "There's a Little Game in All of Us.<br>Find yourself.",
+        "hero.play": "Play now", "hero.who": "Who are we?",
+        "award": "Engineering Project of the Year '23 · Beykoz University",
+        "games.title": "OUR GAMES", "games.sub": "No keyboard, no controller. Just your hands and a webcam.",
+        "card.fish": "Steer the shark with your hand and close it to catch Nemo. Watch out for the blowfish!",
+        "card.fruit": "Use both hands: open over a fruit, then close your hand to pick it up before time runs out.",
+        "card.tetris": "The 1984 classic, steered with hand gestures. Move, rotate and drop the blocks without touching a key.",
+        "card.play": "Play", "card.how": "How to play →",
+        "how.title": "HOW IT WORKS", "how.sub": "Everything runs in your browser. The camera image never leaves your device.",
+        "how.1t": "Pick a game", "how.1": "Choose Catching Fish, Fruit Ninja or Tetris and press Play.",
+        "how.2t": "Allow the camera", "how.2": "Your browser asks once. No camera? Mouse and keyboard work too.",
+        "how.3t": "Play with your hands", "how.3": "MediaPipe tracks 21 points on each hand in real time.",
+        "desc.fish": "The game is catching fish. An exciting adventure inspired by the beloved film \"Finding Nemo\". In order not to starve the shark, you have to eat the Nemo. Just open and close your hand for the shark to catch the Nemo. You have 60 seconds, be quick. Be careful, don't eat the blowfish while you try to catch the Nemo.",
+        "desc.fruit": "Are you seeking an immersive gaming experience? Discover the thrill of playing this game using both hands, a new approach that deviates from the conventional phone-based gameplay. Envision your hands transforming into razor-sharp blades as you obliterate a variety of fruits, unlocking a sense of exhilaration like never before.",
+        "desc.tetris": "Did you know that the first Tetris game appeared in 1984? However, we have revitalized this beloved game using cutting-edge technologies, bringing it into the modern era of 2023. All you have to do is give directions to the blocks with your hands. Experience the thrill of this ambitious adaptation, as you challenge yourself.",
+        "hint.title": "HINT:", "hint.catching": "CATCHING", "hint.pickup": "PICK UP",
+        "hint.left": "GO LEFT", "hint.right": "GO RIGHT", "hint.rotate": "ROTATES", "hint.nohand": "NO HAND", "hint.down": "GO DOWN",
+        "play.fish": "PLAY CATCHING FISH", "play.fruit": "PLAY FRUIT NINJA", "play.tetris": "PLAY TETRIS",
+        "download": "Download",
+        "note.fish": "Your camera opens; steer the shark by opening and closing your hand. No camera? You can play with the mouse.",
+        "note.fruit": "You can play with both hands: open your hand over a fruit, then close it to catch it.",
+        "note.tetris": "Control the blocks with hand gestures. The arrow keys on your keyboard work too.",
+        "about.title": "WHO ARE WE ?", "about.sub": "Beykoz University · 2022–2023",
+        "role.cv": "Computer Vision", "role.web": "Web Interface Design", "role.game": "Game Development",
+        "story.title": "🏆 Engineering Project of the Year '23",
+        "story.1": "Tricoders, a real-life game controlled with human hand gestures, received the Engineering Project of the Year award at Beykoz University in the 2022–2023 third-grade category.",
+        "story.2": "We wanted to re-present familiar games with an innovative idea: instead of a keyboard, the games follow your hand movements, so you can experience them in a more physical way.",
+        "li.title": "Tricoders on LinkedIn", "li.sub": "Our award, as announced by our instructor Mustafa Yıldız.", "li.open": "Open on LinkedIn ↗",
+        "form.title": "We are waiting for your comments 😎",
+        "form.name": "Name", "form.last": "Last name", "form.age": "Age", "form.game": "Favorite game",
+        "form.fish": "Catching Fish score [0–10]", "form.fruit": "Fruit Ninja score [0–10]", "form.tetris": "Tetris score [0–10]",
+        "form.submit": "Sign the form", "form.ok": "Form signed successfully.",
+        "footer": "Tricoders · Beykoz University",
+      },
+      tr: {
+        "doc.title": "Tricoders · Gerçek Hayat Oyunları",
+        "nav.home": "Ana Sayfa", "nav.about": "Hakkımızda",
+        "hero.title": "GERÇEK HAYAT OYUNU",
+        "hero.tagline": "Hepimizin içinde küçük bir oyun var.<br>Kendini bul.",
+        "hero.play": "Hemen oyna", "hero.who": "Biz kimiz?",
+        "award": "Yılın Mühendislik Projesi '23 · Beykoz Üniversitesi",
+        "games.title": "OYUNLARIMIZ", "games.sub": "Klavye yok, kumanda yok. Sadece ellerin ve bir kamera.",
+        "card.fish": "Köpek balığını elinle yönet, elini kapatıp Nemo'yu yakala. Balon balığına dikkat!",
+        "card.fruit": "İki elini de kullan: meyvenin üstünde elini aç, süre bitmeden kapatıp meyveyi kap.",
+        "card.tetris": "1984'ün efsane oyunu, el hareketleriyle. Blokları hiçbir tuşa dokunmadan kaydır, döndür, indir.",
+        "card.play": "Oyna", "card.how": "Nasıl oynanır →",
+        "how.title": "NASIL ÇALIŞIR", "how.sub": "Her şey tarayıcında çalışır. Kamera görüntün cihazından hiç çıkmaz.",
+        "how.1t": "Bir oyun seç", "how.1": "Catching Fish, Fruit Ninja ya da Tetris'i seç ve Oyna'ya bas.",
+        "how.2t": "Kameraya izin ver", "how.2": "Tarayıcın bir kez sorar. Kameran yoksa fare ve klavye de çalışır.",
+        "how.3t": "Ellerinle oyna", "how.3": "MediaPipe her elindeki 21 noktayı gerçek zamanlı takip eder.",
+        "desc.fish": "Oyunumuz balık yakalama. Sevilen \"Kayıp Balık Nemo\" filminden ilham alan heyecanlı bir macera. Köpek balığını aç bırakmamak için Nemo'yu yemen gerekiyor. Köpek balığının Nemo'yu yakalaması için elini açıp kapatman yeterli. 60 saniyen var, çabuk ol. Nemo'yu yakalamaya çalışırken balon balığını yememeye dikkat et.",
+        "desc.fruit": "Seni içine çeken bir oyun deneyimi mi arıyorsun? Bu oyunu iki elinle oynamanın heyecanını keşfet: alışılmış telefon oyunlarından farklı, yepyeni bir yaklaşım. Ellerinin keskin kılıçlara dönüştüğünü ve meyveleri bir bir yok ettiğini hayal et; daha önce hiç yaşamadığın bir coşkuyu hisset.",
+        "desc.tetris": "İlk Tetris oyununun 1984'te çıktığını biliyor muydun? Biz bu sevilen oyunu en yeni teknolojilerle yeniden canlandırıp 2023'e taşıdık. Tek yapman gereken bloklara ellerinle yön vermek. Kendine meydan okurken bu iddialı uyarlamanın heyecanını yaşa.",
+        "hint.title": "İPUCU:", "hint.catching": "YAKALA", "hint.pickup": "KAP",
+        "hint.left": "SOLA", "hint.right": "SAĞA", "hint.rotate": "DÖNDÜR", "hint.nohand": "EL YOK", "hint.down": "AŞAĞI",
+        "play.fish": "CATCHING FISH OYNA", "play.fruit": "FRUIT NINJA OYNA", "play.tetris": "TETRIS OYNA",
+        "download": "İndir",
+        "note.fish": "Kameran açılır, elini aç-kapa yaparak köpek balığını yönet. Kamera yoksa fare ile de oynanır.",
+        "note.fruit": "İki elinle de oynayabilirsin: meyvenin üstünde elini aç, sonra kapatıp yakala.",
+        "note.tetris": "Blokları el hareketlerinle yönet. Klavyenin ok tuşları da çalışır.",
+        "about.title": "BİZ KİMİZ ?", "about.sub": "Beykoz Üniversitesi · 2022–2023",
+        "role.cv": "Bilgisayarlı Görü", "role.web": "Web Arayüz Tasarımı", "role.game": "Oyun Geliştirme",
+        "story.title": "🏆 Yılın Mühendislik Projesi '23",
+        "story.1": "El hareketleriyle kontrol edilen gerçek hayat oyunu Tricoders, Beykoz Üniversitesi'nde 2022–2023 3. sınıf kategorisinde Yılın Mühendislik Projesi ödülünü aldı.",
+        "story.2": "Bildiğimiz oyunları yenilikçi bir fikirle yeniden sunmak istedik: oyunlar klavye yerine el hareketlerini takip ediyor, böylece onları çok daha fiziksel bir şekilde deneyimliyorsun.",
+        "li.title": "LinkedIn'de Tricoders", "li.sub": "Hocamız Mustafa Yıldız'ın ödülümüzü duyurduğu paylaşım.", "li.open": "LinkedIn'de aç ↗",
+        "form.title": "Yorumlarını bekliyoruz 😎",
+        "form.name": "Ad", "form.last": "Soyad", "form.age": "Yaş", "form.game": "En sevdiğin oyun",
+        "form.fish": "Catching Fish puanın [0–10]", "form.fruit": "Fruit Ninja puanın [0–10]", "form.tetris": "Tetris puanın [0–10]",
+        "form.submit": "Formu gönder", "form.ok": "Form başarıyla gönderildi.",
+        "footer": "Tricoders · Beykoz Üniversitesi",
+      },
+    };
+    const LANG_KEY = "tricoders-lang";
+    function savedLang() {
+      try { const l = localStorage.getItem(LANG_KEY); if (l === "tr" || l === "en") return l; } catch {}
+      // first visit: follow the browser language
+      return (navigator.languages || [navigator.language]).some((l) => /^tr\b/i.test(l)) ? "tr" : "en";
+    }
+    function setLang(lang) {
+      const dict = I18N[lang];
+      document.documentElement.lang = lang;
+      document.title = dict["doc.title"];
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const text = dict[el.dataset.i18n];
+        if (text !== undefined) el.innerHTML = text;
+      });
+      document.querySelectorAll(".lang button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+      try { localStorage.setItem(LANG_KEY, lang); } catch {}
+    }
+    document.querySelectorAll(".lang button").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang)));
+    setLang(savedLang());
+
     const tabs = ["home", "catching-fish", "fruit-ninja", "tetris", "about"];
     function show() {
       const hash = location.hash.slice(1);
